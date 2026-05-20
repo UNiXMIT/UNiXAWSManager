@@ -20,11 +20,20 @@ export default function InstancesTab({ notify }) {
   const [loading, setLoading] = useState(false);
   const [confirmTermAll, setConfirmTermAll] = useState(false);
 
+  const normalizedOwner = owner.trim();
+
   const load = async () => {
+    if (!normalizedOwner) {
+      setInstances([]);
+      setSelected(null);
+      notify('Owner tag is required', 'error');
+      return;
+    }
+
     setLoading(true);
     setSelected(null);
     try {
-      const data = await api.listInstances(owner || undefined, region);
+      const data = await api.listInstances(normalizedOwner, region);
       setInstances(data);
       if (data.length === 0) notify('No instances found', 'error');
     } catch (err) {
@@ -35,8 +44,14 @@ export default function InstancesTab({ notify }) {
   };
 
   const handleTerminateAll = async () => {
+    if (!normalizedOwner) {
+      notify('Owner tag is required', 'error');
+      setConfirmTermAll(false);
+      return;
+    }
+
     try {
-      const result = await api.terminateAll(owner, region);
+      const result = await api.terminateAll(normalizedOwner, region);
       notify(result.message || `Terminated ${result.terminated.length} instance(s)`);
       setInstances([]);
       setSelected(null);
@@ -78,7 +93,7 @@ export default function InstancesTab({ notify }) {
         </div>
         <button
           onClick={load}
-          disabled={loading}
+          disabled={loading || !normalizedOwner}
           className="bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-4 py-2 rounded text-sm font-medium transition-colors"
         >
           {loading ? 'Loading…' : 'Load Instances'}
@@ -88,7 +103,7 @@ export default function InstancesTab({ notify }) {
             onClick={() => setConfirmTermAll(true)}
             className="ml-auto bg-red-800 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
           >
-            ⚠ Terminate All ({owner})
+            ⚠ Terminate All ({normalizedOwner})
           </button>
         )}
       </div>
@@ -108,6 +123,7 @@ export default function InstancesTab({ notify }) {
           instance={selected}
           region={region}
           notify={notify}
+          terminateScope={{ owner: selected.owner || normalizedOwner }}
           onDone={handleDone}
           onClose={() => setSelected(null)}
         />
@@ -115,7 +131,12 @@ export default function InstancesTab({ notify }) {
 
       {confirmTermAll && (
         <ConfirmDialog
-          message={`Terminate ALL instances owned by "${owner}" in ${region}? The protected instance will be skipped. This cannot be undone.`}
+          message={`Terminate ALL instances owned by "${normalizedOwner}" in ${region}? The protected instance will be skipped. This cannot be undone.`}
+          previewTitle={`Instances to terminate (${instances.length})`}
+          previewItems={instances.map(inst => ({
+            primary: inst.instanceId,
+            secondary: `${inst.name || 'Unnamed'} | ${inst.state || 'unknown'} | ${region}`,
+          }))}
           confirmLabel="Terminate All"
           danger
           onConfirm={handleTerminateAll}

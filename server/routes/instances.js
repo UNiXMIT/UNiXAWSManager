@@ -18,6 +18,34 @@ const DEFAULT_REGION = 'eu-west-2';
 
 const getClient = (region = DEFAULT_REGION) => new EC2Client({ region });
 
+const getTagValue = (instance, key) => instance.Tags?.find(tag => tag.Key === key)?.Value || '';
+
+const isSemInstance = (instance) => getTagValue(instance, 'Name').toUpperCase().startsWith('SEM');
+
+async function getInstancesByIds(region, ids) {
+  const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+  if (!uniqueIds.length) return [];
+
+  const data = await getClient(region).send(new DescribeInstancesCommand({ InstanceIds: uniqueIds }));
+  return data.Reservations?.flatMap(r => r.Instances || []) || [];
+}
+
+function getTerminationScopeError(instance, { owner, semOnly }) {
+  if (!owner && !semOnly) {
+    return 'Termination scope is required.';
+  }
+
+  if (owner && getTagValue(instance, 'Owner') !== owner) {
+    return `Instance ${instance.InstanceId} is not owned by ${owner}.`;
+  }
+
+  if (semOnly && !isSemInstance(instance)) {
+    return `Instance ${instance.InstanceId} is not a SEM instance.`;
+  }
+
+  return null;
+}
+
 function formatInstance(i) {
   return {
     instanceId: i.InstanceId,
@@ -129,6 +157,53 @@ router.delete('/terminate-all', async (req, res) => {
   }
 });
 
+// POST /api/instances/terminate-batch
+// Body: { ids: [], region, owner?, semOnly? }
+router.post('/terminate-batch', async (req, res) => {
+  const {
+    ids,
+    region = DEFAULT_REGION,
+    owner,
+    semOnly = false,
+  } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'At least one instance ID is required.' });
+  }
+
+  if (!owner && !semOnly) {
+    return res.status(400).json({ error: 'Termination scope is required.' });
+  }
+
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  const protectedIds = uniqueIds.filter(id => id === PROTECTED_INSTANCE);
+  const requestedIds = uniqueIds.filter(id => id !== PROTECTED_INSTANCE);
+
+  if (!requestedIds.length) {
+    return res.json({ terminated: [], skippedProtected: protectedIds });
+  }
+
+  try {
+    const instances = await getInstancesByIds(region, requestedIds);
+    const foundIds = new Set(instances.map(instance => instance.InstanceId));
+    const missingIds = requestedIds.filter(id => !foundIds.has(id));
+
+    if (missingIds.length) {
+      return res.status(404).json({ error: `Instance(s) not found: ${missingIds.join(', ')}` });
+    }
+
+    for (const instance of instances) {
+      const scopeError = getTerminationScopeError(instance, { owner, semOnly: !!semOnly });
+      if (scopeError) return res.status(403).json({ error: scopeError });
+    }
+
+    await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: requestedIds }));
+    res.json({ terminated: requestedIds, skippedProtected: protectedIds });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/instances/:id/start
 router.post('/:id/start', async (req, res) => {
   const { region = DEFAULT_REGION } = req.body;
@@ -213,11 +288,26 @@ router.post('/:id/protection', async (req, res) => {
 
 // DELETE /api/instances/:id?region=
 router.delete('/:id', async (req, res) => {
-  const { region = DEFAULT_REGION } = req.query;
+  const { region = DEFAULT_REGION, owner, semOnly } = req.query;
   if (req.params.id === PROTECTED_INSTANCE) {
     return res.status(403).json({ error: `Instance ${PROTECTED_INSTANCE} is protected and cannot be terminated.` });
   }
+
+  if (!owner && semOnly !== 'true') {
+    return res.status(400).json({ error: 'Termination scope is required.' });
+  }
+
   try {
+    const [instance] = await getInstancesByIds(region, [req.params.id]);
+    if (!instance) {
+      return res.status(404).json({ error: `Instance ${req.params.id} not found.` });
+    }
+
+    const scopeError = getTerminationScopeError(instance, { owner, semOnly: semOnly === 'true' });
+    if (scopeError) {
+      return res.status(403).json({ error: scopeError });
+    }
+
     await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: [req.params.id] }));
     res.json({ success: true });
   } catch (err) {

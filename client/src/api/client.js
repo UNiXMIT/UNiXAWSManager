@@ -29,7 +29,8 @@ export const api = {
   renameInstance: (id, name, region) => request('POST', `/instances/${id}/rename`, { name, region }),
   changeOwner: (id, owner, region) => request('POST', `/instances/${id}/owner`, { owner, region }),
   setProtection: (id, enabled, region) => request('POST', `/instances/${id}/protection`, { enabled, region }),
-  terminateInstance: (id, region) => request('DELETE', `/instances/${id}`, null, { region }),
+  terminateInstance: (id, region, scope = {}) => request('DELETE', `/instances/${id}`, null, { region, ...scope }),
+  terminateBatch: (ids, region, scope = {}) => request('POST', '/instances/terminate-batch', { ids, region, ...scope }),
   terminateAll: (owner, region) => request('DELETE', `/instances/terminate-all`, null, { owner, region }),
 
   // Security Groups

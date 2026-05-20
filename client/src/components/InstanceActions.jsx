@@ -21,7 +21,7 @@ function ActionButton({ label, onClick, loading, color = 'blue' }) {
   );
 }
 
-export default function InstanceActions({ instance, region, notify, onDone, onClose }) {
+export default function InstanceActions({ instance, region, notify, onDone, onClose, terminateScope = null }) {
   const [busy, setBusy] = useState('');
   const [newName, setNewName] = useState(instance.name);
   const [newOwner, setNewOwner] = useState(instance.owner);
@@ -150,11 +150,18 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
       {confirmTerminate && (
         <ConfirmDialog
           message={`Permanently terminate "${instance.name || instance.instanceId}"? This cannot be undone.`}
+          previewTitle="Instance to terminate"
+          previewItems={[
+            {
+              primary: instance.instanceId,
+              secondary: `${instance.name || 'Unnamed'} | ${region}`,
+            },
+          ]}
           confirmLabel="Terminate"
           danger
           onConfirm={() => {
             setConfirmTerminate(false);
-            run('Terminate', () => api.terminateInstance(instance.instanceId, region), true);
+            run('Terminate', () => api.terminateInstance(instance.instanceId, region, terminateScope || {}), true);
           }}
           onCancel={() => setConfirmTerminate(false)}
         />

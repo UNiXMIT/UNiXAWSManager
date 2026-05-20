@@ -23,6 +23,7 @@ function formatInstance(i) {
     instanceId: i.InstanceId,
     name: i.Tags?.find(t => t.Key === 'Name')?.Value || '',
     owner: i.Tags?.find(t => t.Key === 'Owner')?.Value || '',
+    semStatus: i.Tags?.find(t => t.Key === 'SemStatus')?.Value || '',
     state: i.State?.Name,
     publicIp: i.PublicIpAddress || '',
     privateIp: i.PrivateIpAddress || '',

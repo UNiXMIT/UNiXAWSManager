@@ -27,7 +27,6 @@ const COLUMNS = [
   { key: 'instanceType', label: 'Type' },
   { key: 'owner',        label: 'Owner' },
   { key: 'launchTime',   label: 'Launch Time' },
-  { key: 'vpcId',        label: 'VPC' },
 ];
 
 function SortIcon({ active, dir }) {
@@ -86,7 +85,6 @@ export default function AllInstancesTab({ notify }) {
         Type: i.instanceType,
         Owner: i.owner,
         'Launch Time': i.launchTime ? new Date(i.launchTime).toLocaleString('en-GB') : '',
-        VPC: i.vpcId,
         Subnet: i.subnetId,
       })),
       `ec2-instances-${region}-${new Date().toISOString().slice(0, 10)}.csv`
@@ -168,7 +166,6 @@ export default function AllInstancesTab({ notify }) {
                     <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                       {inst.launchTime ? new Date(inst.launchTime).toLocaleString('en-GB') : '—'}
                     </td>
-                    <td className="px-4 py-3 font-mono text-gray-400 text-xs">{inst.vpcId || '—'}</td>
                   </tr>
                 ))}
               </tbody>

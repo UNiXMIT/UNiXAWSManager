@@ -13,20 +13,39 @@ function CopyableIp({ ip }) {
   const [copied, setCopied] = useState(false);
   if (!ip) return <span className="text-gray-500">—</span>;
 
-  const copy = (e) => {
+  const copy = async (e) => {
     e.stopPropagation();
+
+    const markCopied = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    };
+
     try {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(ip);
+        markCopied();
+        return;
+      }
+
       const ta = document.createElement('textarea');
       ta.value = ip;
+      ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
-      ta.style.opacity = '0';
+      ta.style.top = '-1000px';
+      ta.style.left = '-1000px';
       document.body.appendChild(ta);
       ta.focus();
       ta.select();
-      document.execCommand('copy');
+      ta.setSelectionRange(0, ta.value.length);
+      const didCopy = document.execCommand('copy');
+      ta.blur();
       document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      window.getSelection()?.removeAllRanges();
+
+      if (didCopy) {
+        markCopied();
+      }
     } catch {}
   };
 
@@ -65,8 +84,8 @@ export default function InstanceTable({ instances, selected, onSelect }) {
               <th className="px-4 py-3 font-medium">State</th>
               <th className="px-4 py-3 font-medium">Public IP</th>
               <th className="px-4 py-3 font-medium">Private IP</th>
-              <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3 font-medium">Owner</th>
+              <th className="px-4 py-3 font-medium">SemStatus</th>
             </tr>
           </thead>
           <tbody>
@@ -90,8 +109,8 @@ export default function InstanceTable({ instances, selected, onSelect }) {
                 </td>
                 <td className="px-4 py-3 text-xs"><CopyableIp ip={inst.publicIp} /></td>
                 <td className="px-4 py-3 text-xs"><CopyableIp ip={inst.privateIp} /></td>
-                <td className="px-4 py-3 text-gray-300">{inst.instanceType}</td>
                 <td className="px-4 py-3 text-gray-300">{inst.owner || '—'}</td>
+                <td className="px-4 py-3 text-gray-300">{inst.semStatus || '—'}</td>
               </tr>
             ))}
           </tbody>

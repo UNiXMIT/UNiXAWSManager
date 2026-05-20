@@ -7,8 +7,8 @@ runOptions=(
 -e AWS_DEFAULT_REGION=eu-west-2
 -e DEFAULT_REGION=eu-west-2
 -e DEFAULT_OWNER=SUPPORT
---restart always
 -p 8989:3001
+--restart always
 --health-cmd "wget -qO- http://localhost:3001/api/health || exit 1"
 --health-interval 30s
 --health-timeout 10s

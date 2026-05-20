@@ -25,7 +25,7 @@ function Inner() {
           <path d="M8 21h8M12 17v4" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        <h1 className="text-lg font-bold text-white tracking-tight">AWS EC2 Manager</h1>
+        <h1 className="text-lg font-bold text-white tracking-tight">AWSManager</h1>
       </header>
 
       <div className="bg-gray-800 border-b border-gray-700">

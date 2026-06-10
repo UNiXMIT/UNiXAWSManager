@@ -131,7 +131,7 @@ export default function InstancesTab({ notify }) {
 
       {confirmTermAll && (
         <ConfirmDialog
-          message={`Terminate ALL instances owned by "${normalizedOwner}" in ${region}? The protected instance will be skipped. This cannot be undone.`}
+          message={`Terminate ALL instances owned by "${normalizedOwner}" in ${region}? This cannot be undone.`}
           previewTitle={`Instances to terminate (${instances.length})`}
           previewItems={instances.map(inst => ({
             primary: inst.instanceId,

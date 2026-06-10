@@ -13,7 +13,6 @@ import {
 } from '@aws-sdk/client-ec2';
 
 const router = Router();
-const PROTECTED_INSTANCE = 'i-0b93bc56752494396';
 const DEFAULT_REGION = 'eu-west-2';
 
 const getClient = (region = DEFAULT_REGION) => new EC2Client({ region });
@@ -146,8 +145,7 @@ router.delete('/terminate-all', async (req, res) => {
       })
     );
     const ids = (data.Reservations?.flatMap(r => r.Instances || []) || [])
-      .map(i => i.InstanceId)
-      .filter(id => id !== PROTECTED_INSTANCE);
+      .map(i => i.InstanceId);
 
     if (!ids.length) return res.json({ terminated: [], message: 'No instances to terminate.' });
     await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: ids }));
@@ -176,17 +174,11 @@ router.post('/terminate-batch', async (req, res) => {
   }
 
   const uniqueIds = [...new Set(ids.filter(Boolean))];
-  const protectedIds = uniqueIds.filter(id => id === PROTECTED_INSTANCE);
-  const requestedIds = uniqueIds.filter(id => id !== PROTECTED_INSTANCE);
-
-  if (!requestedIds.length) {
-    return res.json({ terminated: [], skippedProtected: protectedIds });
-  }
 
   try {
-    const instances = await getInstancesByIds(region, requestedIds);
+    const instances = await getInstancesByIds(region, uniqueIds);
     const foundIds = new Set(instances.map(instance => instance.InstanceId));
-    const missingIds = requestedIds.filter(id => !foundIds.has(id));
+    const missingIds = uniqueIds.filter(id => !foundIds.has(id));
 
     if (missingIds.length) {
       return res.status(404).json({ error: `Instance(s) not found: ${missingIds.join(', ')}` });
@@ -197,8 +189,8 @@ router.post('/terminate-batch', async (req, res) => {
       if (scopeError) return res.status(403).json({ error: scopeError });
     }
 
-    await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: requestedIds }));
-    res.json({ terminated: requestedIds, skippedProtected: protectedIds });
+    await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: uniqueIds }));
+    res.json({ terminated: uniqueIds });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -289,10 +281,6 @@ router.post('/:id/protection', async (req, res) => {
 // DELETE /api/instances/:id?region=
 router.delete('/:id', async (req, res) => {
   const { region = DEFAULT_REGION, owner, semOnly } = req.query;
-  if (req.params.id === PROTECTED_INSTANCE) {
-    return res.status(403).json({ error: `Instance ${PROTECTED_INSTANCE} is protected and cannot be terminated.` });
-  }
-
   if (!owner && semOnly !== 'true') {
     return res.status(400).json({ error: 'Termination scope is required.' });
   }

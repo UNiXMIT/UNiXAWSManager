@@ -42,6 +42,13 @@ export const api = {
   attachSgToInstance: (instanceId, groupIds, region) =>
     request('POST', '/security-groups/attach', { instanceId, groupIds, region }),
 
+  // Semaphore
+  semGetProjects: () => request('GET', '/semaphore/projects'),
+  semGetViews: (projectId) => request('GET', `/semaphore/projects/${projectId}/views`),
+  semGetTemplates: (projectId) => request('GET', `/semaphore/projects/${projectId}/templates`),
+  semStartTask: (projectId, templateId, vars) =>
+    request('POST', `/semaphore/projects/${projectId}/tasks`, { templateId, ...vars }),
+
   // Utils
   getMyIp: () => request('GET', '/myip'),
   getConfig: () => request('GET', '/config'),

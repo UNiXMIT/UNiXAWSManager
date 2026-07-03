@@ -4,9 +4,10 @@ import InstancesTab from './components/InstancesTab';
 import AllInstancesTab from './components/AllInstancesTab';
 import AmisTab from './components/AmisTab';
 import SemTab from './components/SemTab';
+import SemaphoreTab from './components/SemaphoreTab';
 import Toast from './components/Toast';
 
-const TABS = ['EC2 Instances', 'All Instances', 'AMIs', 'SEM Instances'];
+const TABS = ['EC2 Instances', 'Semaphore', 'All Instances', 'AMIs', 'SEM Instances'];
 
 function Inner() {
   const [activeTab, setActiveTab] = useState(0);
@@ -48,9 +49,10 @@ function Inner() {
 
       <main className="p-6 max-w-7xl mx-auto">
         {activeTab === 0 && <InstancesTab notify={notify} />}
-        {activeTab === 1 && <AllInstancesTab notify={notify} />}
-        {activeTab === 2 && <AmisTab notify={notify} />}
-        {activeTab === 3 && <SemTab notify={notify} />}
+        {activeTab === 1 && <SemaphoreTab notify={notify} />}
+        {activeTab === 2 && <AllInstancesTab notify={notify} />}
+        {activeTab === 3 && <AmisTab notify={notify} />}
+        {activeTab === 4 && <SemTab notify={notify} />}
       </main>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

@@ -5,6 +5,7 @@ import { join, dirname } from 'path';
 import { existsSync } from 'fs';
 import instancesRouter from './routes/instances.js';
 import securityGroupsRouter from './routes/securityGroups.js';
+import semaphoreRouter from './routes/semaphore.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -30,6 +31,7 @@ app.get('/api/config', (_req, res) => {
 
 app.use('/api/instances', instancesRouter);
 app.use('/api/security-groups', securityGroupsRouter);
+app.use('/api/semaphore', semaphoreRouter);
 
 app.get('/api/myip', async (_req, res) => {
   try {

@@ -33,6 +33,8 @@ export const api = {
   terminateBatch: (ids, region, scope = {}) => request('POST', '/instances/terminate-batch', { ids, region, ...scope }),
   terminateAll: (owner, region) => request('DELETE', `/instances/terminate-all`, null, { owner, region }),
 
+  getInstanceProtection: (id, region) => request('GET', `/instances/${id}/protection`, null, { region }),
+
   // Security Groups
   getSgDetails: (id, region) => request('GET', `/security-groups/${id}`, null, { region }),
   createSg: (name, description, vpcId, region) => request('POST', '/security-groups', { name, description, vpcId, region }),

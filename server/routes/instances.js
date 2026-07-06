@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   EC2Client,
   DescribeInstancesCommand,
+  DescribeInstanceAttributeCommand,
   StartInstancesCommand,
   StopInstancesCommand,
   RebootInstancesCommand,
@@ -55,6 +56,7 @@ function formatInstance(i) {
     publicIp: i.PublicIpAddress || '',
     privateIp: i.PrivateIpAddress || '',
     publicDns: i.PublicDnsName || '',
+    privateDns: i.PrivateDnsName || '',
     instanceType: i.InstanceType || '',
     launchTime: i.LaunchTime,
     securityGroups: (i.SecurityGroups || []).map(sg => ({
@@ -147,9 +149,26 @@ router.delete('/terminate-all', async (req, res) => {
     const ids = (data.Reservations?.flatMap(r => r.Instances || []) || [])
       .map(i => i.InstanceId);
 
-    if (!ids.length) return res.json({ terminated: [], message: 'No instances to terminate.' });
-    await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: ids }));
-    res.json({ terminated: ids });
+    if (!ids.length) return res.json({ terminated: [], skipped: [], message: 'No instances to terminate.' });
+
+    // Try bulk termination first (fast path)
+    try {
+      await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: ids }));
+      return res.json({ terminated: ids, skipped: [] });
+    } catch {
+      // Fall back to one-by-one so protected instances don't block the rest
+      const terminated = [];
+      const skipped = [];
+      await Promise.all(ids.map(async (id) => {
+        try {
+          await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: [id] }));
+          terminated.push(id);
+        } catch {
+          skipped.push(id);
+        }
+      }));
+      return res.json({ terminated, skipped });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -191,6 +210,24 @@ router.post('/terminate-batch', async (req, res) => {
 
     await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: uniqueIds }));
     res.json({ terminated: uniqueIds });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/instances/:id/protection?region=
+router.get('/:id/protection', async (req, res) => {
+  const { region = DEFAULT_REGION } = req.query;
+  try {
+    const client = getClient(region);
+    const [termRes, stopRes] = await Promise.all([
+      client.send(new DescribeInstanceAttributeCommand({ InstanceId: req.params.id, Attribute: 'disableApiTermination' })),
+      client.send(new DescribeInstanceAttributeCommand({ InstanceId: req.params.id, Attribute: 'disableApiStop' })),
+    ]);
+    res.json({
+      terminationProtection: termRes.DisableApiTermination?.Value ?? false,
+      stopProtection: stopRes.DisableApiStop?.Value ?? false,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

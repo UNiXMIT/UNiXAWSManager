@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
 import SecurityGroupPanel from './SecurityGroupPanel';
 
 function ActionButton({ label, onClick, loading, color = 'blue' }) {
   const colors = {
-    blue: 'bg-blue-700 hover:bg-blue-600',
-    green: 'bg-green-700 hover:bg-green-600',
-    yellow: 'bg-yellow-700 hover:bg-yellow-600',
-    red: 'bg-red-800 hover:bg-red-700',
+    blue:   'bg-blue-700 hover:bg-blue-600',
+    green:  'bg-[#45A56F] hover:bg-[#3d9463]',
+    yellow: 'bg-[#F9B13A] hover:bg-[#e09a28] text-gray-900',
+    red:    'bg-[#D90000] hover:bg-[#b80000]',
   };
   return (
     <button
@@ -27,6 +27,13 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
   const [newOwner, setNewOwner] = useState(instance.owner);
   const [confirmTerminate, setConfirmTerminate] = useState(false);
   const [showSgs, setShowSgs] = useState(false);
+  const [protection, setProtection] = useState(null);
+
+  useEffect(() => {
+    api.getInstanceProtection(instance.instanceId, region)
+      .then(setProtection)
+      .catch(() => {});
+  }, [instance.instanceId, region]);
 
   const run = async (label, fn, done = false) => {
     setBusy(label);
@@ -53,6 +60,18 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
             {instance.privateIp && <span>Private IP: <span className="text-gray-300 font-mono">{instance.privateIp}</span></span>}
             {instance.instanceType && <span>Type: <span className="text-gray-300">{instance.instanceType}</span></span>}
             {instance.vpcId && <span>VPC: <span className="text-gray-300 font-mono">{instance.vpcId}</span></span>}
+            {instance.publicDns && <span>Public DNS: <span className="text-gray-300 font-mono">{instance.publicDns}</span></span>}
+            {instance.privateDns && <span>Private DNS: <span className="text-gray-300 font-mono">{instance.privateDns}</span></span>}
+            {protection && (
+              <span className={`font-medium ${protection.terminationProtection ? 'text-[#45A56F]' : 'text-gray-600'}`}>
+                Termination Protection: {protection.terminationProtection ? 'ON' : 'OFF'}
+              </span>
+            )}
+            {protection && (
+              <span className={`font-medium ${protection.stopProtection ? 'text-[#45A56F]' : 'text-gray-600'}`}>
+                Stop Protection: {protection.stopProtection ? 'ON' : 'OFF'}
+              </span>
+            )}
           </div>
         </div>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none ml-4">✕</button>

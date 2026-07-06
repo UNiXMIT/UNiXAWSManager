@@ -52,7 +52,10 @@ export default function InstancesTab({ notify }) {
 
     try {
       const result = await api.terminateAll(normalizedOwner, region);
-      notify(result.message || `Terminated ${result.terminated.length} instance(s)`);
+      const skippedMsg = result.skipped?.length
+        ? ` (${result.skipped.length} protected instance(s) skipped)`
+        : '';
+      notify(result.message || `Terminated ${result.terminated.length} instance(s)${skippedMsg}`);
       setInstances([]);
       setSelected(null);
     } catch (err) {

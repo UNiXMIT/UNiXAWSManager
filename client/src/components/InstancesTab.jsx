@@ -6,6 +6,7 @@ import InstanceActions from './InstanceActions';
 import ConfirmDialog from './ConfirmDialog';
 
 const REGIONS = [
+  'all',
   'eu-west-2', 'eu-west-1', 'eu-central-1',
   'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2',
   'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1',
@@ -88,10 +89,10 @@ export default function InstancesTab({ notify }) {
           <label className="block text-xs text-gray-400 mb-1">Region</label>
           <select
             value={region}
-            onChange={e => setRegion(e.target.value)}
+            onChange={e => { setRegion(e.target.value); setInstances([]); setSelected(null); }}
             className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
           >
-            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            {REGIONS.map(r => <option key={r} value={r}>{r === 'all' ? 'All Regions' : r}</option>)}
           </select>
         </div>
         <button
@@ -101,7 +102,7 @@ export default function InstancesTab({ notify }) {
         >
           {loading ? 'Loading…' : 'Load Instances'}
         </button>
-        {instances.length > 0 && (
+        {instances.length > 0 && region !== 'all' && (
           <button
             onClick={() => setConfirmTermAll(true)}
             className="ml-auto bg-red-800 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
@@ -124,7 +125,7 @@ export default function InstancesTab({ notify }) {
       {selected && (
         <InstanceActions
           instance={selected}
-          region={region}
+          region={region === 'all' ? (selected.region || region) : region}
           notify={notify}
           terminateScope={{ owner: selected.owner || normalizedOwner }}
           onDone={handleDone}

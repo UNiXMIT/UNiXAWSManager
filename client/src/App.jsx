@@ -5,9 +5,10 @@ import AllInstancesTab from './components/AllInstancesTab';
 import AmisTab from './components/AmisTab';
 import SemTab from './components/SemTab';
 import SemaphoreTab from './components/SemaphoreTab';
+import SemTasksTab from './components/SemTasksTab';
 import Toast from './components/Toast';
 
-const TABS = ['EC2 Instances', 'Semaphore', 'All Instances', 'AMIs', 'SEM Instances'];
+const TABS = ['EC2 Instances', 'Semaphore', 'SEM Tasks', 'All Instances', 'AMIs', 'SEM Instances'];
 
 function Inner() {
   const [activeTab, setActiveTab] = useState(0);
@@ -30,12 +31,12 @@ function Inner() {
       </header>
 
       <div className="bg-gray-800 border-b border-gray-700">
-        <nav className="flex px-6">
+        <nav className="flex overflow-x-auto scrollbar-none px-6">
           {TABS.map((tab, i) => (
             <button
               key={tab}
               onClick={() => setActiveTab(i)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === i
                   ? 'border-orange-400 text-orange-400'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
@@ -50,9 +51,10 @@ function Inner() {
       <main className="p-6 max-w-7xl mx-auto">
         {activeTab === 0 && <InstancesTab notify={notify} />}
         {activeTab === 1 && <SemaphoreTab notify={notify} />}
-        {activeTab === 2 && <AllInstancesTab notify={notify} />}
-        {activeTab === 3 && <AmisTab notify={notify} />}
-        {activeTab === 4 && <SemTab notify={notify} />}
+        {activeTab === 2 && <SemTasksTab notify={notify} />}
+        {activeTab === 3 && <AllInstancesTab notify={notify} />}
+        {activeTab === 4 && <AmisTab notify={notify} />}
+        {activeTab === 5 && <SemTab notify={notify} />}
       </main>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

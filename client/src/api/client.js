@@ -23,6 +23,7 @@ export const api = {
   listInstances: (owner, region) => request('GET', '/instances', null, { owner, region }),
   listAmis: (region) => request('GET', '/instances/amis', null, { region }),
   listSem: () => request('GET', '/instances/sem'),
+  getSemTaskStatuses: (taskIds) => request('GET', '/instances/sem-task-status', null, { taskIds: taskIds.join(',') }),
   startInstance: (id, region) => request('POST', `/instances/${id}/start`, { region }),
   stopInstance: (id, region) => request('POST', `/instances/${id}/stop`, { region }),
   rebootInstance: (id, region) => request('POST', `/instances/${id}/reboot`, { region }),
@@ -48,8 +49,12 @@ export const api = {
   semGetProjects: () => request('GET', '/semaphore/projects'),
   semGetViews: (projectId) => request('GET', `/semaphore/projects/${projectId}/views`),
   semGetTemplates: (projectId) => request('GET', `/semaphore/projects/${projectId}/templates`),
+  semGetProjectUsers: (projectId) => request('GET', `/semaphore/projects/${projectId}/users`),
   semStartTask: (projectId, templateId, vars) =>
     request('POST', `/semaphore/projects/${projectId}/tasks`, { templateId, ...vars }),
+  semGetLastTasks: (projectId) => request('GET', `/semaphore/projects/${projectId}/tasks/last`),
+  semGetTask: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}`),
+  semGetTaskOutput: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}/output`),
 
   // Utils
   getMyIp: () => request('GET', '/myip'),

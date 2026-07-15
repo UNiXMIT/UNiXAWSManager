@@ -65,7 +65,12 @@ function formatInstance(i) {
     })),
     subnetId: i.SubnetId || '',
     vpcId: i.VpcId || '',
+    region: '',
   };
+}
+
+function formatInstanceInRegion(i, region) {
+  return { ...formatInstance(i), region };
 }
 
 // GET /api/instances?owner=&region=
@@ -75,6 +80,27 @@ router.get('/', async (req, res) => {
     { Name: 'instance-state-name', Values: ['pending', 'running', 'shutting-down', 'stopped', 'stopping'] },
   ];
   if (owner) filters.push({ Name: 'tag:Owner', Values: [owner] });
+
+  if (region === 'all') {
+    try {
+      const regionsData = await getClient(DEFAULT_REGION).send(
+        new DescribeRegionsCommand({ Filters: [{ Name: 'opt-in-status', Values: ['opt-in-not-required', 'opted-in'] }] })
+      );
+      const allRegions = (regionsData.Regions || []).map(r => r.RegionName);
+      const results = await Promise.all(
+        allRegions.map(async r => {
+          try {
+            const data = await getClient(r).send(new DescribeInstancesCommand({ Filters: filters }));
+            return data.Reservations?.flatMap(res => res.Instances || []).map(i => formatInstanceInRegion(i, r)) || [];
+          } catch { return []; }
+        })
+      );
+      return res.json(results.flat());
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   try {
     const data = await getClient(region).send(new DescribeInstancesCommand({ Filters: filters }));
     res.json(data.Reservations?.flatMap(r => r.Instances || []).map(formatInstance) || []);
@@ -210,6 +236,45 @@ router.post('/terminate-batch', async (req, res) => {
 
     await getClient(region).send(new TerminateInstancesCommand({ InstanceIds: uniqueIds }));
     res.json({ terminated: uniqueIds });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/instances/sem-task-status?taskIds=1,2,3
+// Returns { "<taskId>": "<semStatus>" } for EC2 instances tagged with SemTaskId
+router.get('/sem-task-status', async (req, res) => {
+  try {
+    const taskIds = (req.query.taskIds || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!taskIds.length) return res.json({});
+
+    const regionsData = await getClient(DEFAULT_REGION).send(
+      new DescribeRegionsCommand({ Filters: [{ Name: 'opt-in-status', Values: ['opt-in-not-required', 'opted-in'] }] })
+    );
+    const regions = (regionsData.Regions || []).map(r => r.RegionName);
+
+    const statusMap = {};
+    await Promise.all(
+      regions.map(async region => {
+        try {
+          const data = await getClient(region).send(
+            new DescribeInstancesCommand({
+              Filters: [{ Name: 'tag:SemTaskId', Values: taskIds }],
+            })
+          );
+          const instances = data.Reservations?.flatMap(r => r.Instances || []) || [];
+          for (const inst of instances) {
+            const taskId = inst.Tags?.find(t => t.Key === 'SemTaskId')?.Value;
+            const semStatus = inst.Tags?.find(t => t.Key === 'SemStatus')?.Value || '';
+            if (taskId) statusMap[taskId] = semStatus;
+          }
+        } catch {
+          // skip regions we cannot access
+        }
+      })
+    );
+
+    res.json(statusMap);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

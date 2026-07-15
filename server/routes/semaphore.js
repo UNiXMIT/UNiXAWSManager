@@ -83,6 +83,15 @@ router.get('/projects/:projectId/templates', async (req, res) => {
   }
 });
 
+// GET /api/semaphore/projects/:projectId/users
+router.get('/projects/:projectId/users', async (req, res) => {
+  try {
+    res.json(await semFetch('GET', `/project/${req.params.projectId}/users`));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/semaphore/projects/:projectId/tasks
 router.post('/projects/:projectId/tasks', async (req, res) => {
   try {
@@ -97,6 +106,35 @@ router.post('/projects/:projectId/tasks', async (req, res) => {
       }),
     };
     res.json(await semFetch('POST', `/project/${projectId}/tasks`, payload));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/semaphore/projects/:projectId/tasks/last
+// NOTE: must be declared before /:taskId to avoid route shadowing
+router.get('/projects/:projectId/tasks/last', async (req, res) => {
+  try {
+    const tasks = await semFetch('GET', `/project/${req.params.projectId}/tasks/last`);
+    res.json((tasks || []).slice(0, 20));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/semaphore/projects/:projectId/tasks/:taskId
+router.get('/projects/:projectId/tasks/:taskId', async (req, res) => {
+  try {
+    res.json(await semFetch('GET', `/project/${req.params.projectId}/tasks/${req.params.taskId}`));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/semaphore/projects/:projectId/tasks/:taskId/output
+router.get('/projects/:projectId/tasks/:taskId/output', async (req, res) => {
+  try {
+    res.json(await semFetch('GET', `/project/${req.params.projectId}/tasks/${req.params.taskId}/output`));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

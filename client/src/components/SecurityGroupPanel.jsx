@@ -156,7 +156,7 @@ export default function SecurityGroupPanel({ instance, region, notify }) {
                     : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                 }`}
               >
-                {sg.groupId}
+                {sg.groupId}{sg.groupName ? ` (${sg.groupName})` : ''}
               </button>
             ))}
           </div>

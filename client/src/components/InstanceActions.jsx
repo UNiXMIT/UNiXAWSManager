@@ -3,6 +3,46 @@ import { api } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
 import SecurityGroupPanel from './SecurityGroupPanel';
 
+function CopyButton({ value }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async (e) => {
+    e.stopPropagation();
+    const markCopied = () => { setCopied(true); setTimeout(() => setCopied(false), 1500); };
+    try {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        markCopied();
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:-1000px;left:-1000px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+      if (document.execCommand('copy')) markCopied();
+      ta.blur(); document.body.removeChild(ta);
+      window.getSelection()?.removeAllRanges();
+    } catch {}
+  };
+
+  return (
+    <button onClick={copy} title="Copy" className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-orange-400">
+      {copied ? (
+        <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 function ActionButton({ label, onClick, loading, color = 'blue' }) {
   const colors = {
     blue:   'bg-blue-700 hover:bg-blue-600',
@@ -56,12 +96,13 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
           <h2 className="text-base font-semibold text-white">{instance.name || instance.instanceId}</h2>
           <p className="text-xs font-mono text-gray-400 mt-0.5">{instance.instanceId}</p>
           <div className="flex flex-wrap gap-4 mt-1.5 text-xs text-gray-500">
-            {instance.publicIp && <span>Public IP: <span className="text-gray-300 font-mono">{instance.publicIp}</span></span>}
-            {instance.privateIp && <span>Private IP: <span className="text-gray-300 font-mono">{instance.privateIp}</span></span>}
+            {instance.publicIp && <span className="group flex items-center gap-1">Public IP: <span className="text-gray-300 font-mono">{instance.publicIp}</span><CopyButton value={instance.publicIp} /></span>}
+            {instance.privateIp && <span className="group flex items-center gap-1">Private IP: <span className="text-gray-300 font-mono">{instance.privateIp}</span><CopyButton value={instance.privateIp} /></span>}
             {instance.instanceType && <span>Type: <span className="text-gray-300">{instance.instanceType}</span></span>}
+            {region && <span>Region: <span className="text-gray-300 font-mono">{region}</span></span>}
             {instance.vpcId && <span>VPC: <span className="text-gray-300 font-mono">{instance.vpcId}</span></span>}
-            {instance.publicDns && <span>Public DNS: <span className="text-gray-300 font-mono">{instance.publicDns}</span></span>}
-            {instance.privateDns && <span>Private DNS: <span className="text-gray-300 font-mono">{instance.privateDns}</span></span>}
+            {instance.publicDns && <span className="group flex items-center gap-1">Public DNS: <span className="text-gray-300 font-mono">{instance.publicDns}</span><CopyButton value={instance.publicDns} /></span>}
+            {instance.privateDns && <span className="group flex items-center gap-1">Private DNS: <span className="text-gray-300 font-mono">{instance.privateDns}</span><CopyButton value={instance.privateDns} /></span>}
             {protection && (
               <span className={`font-medium ${protection.terminationProtection ? 'text-[#45A56F]' : 'text-gray-600'}`}>
                 Termination Protection: {protection.terminationProtection ? 'ON' : 'OFF'}

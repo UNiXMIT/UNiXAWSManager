@@ -150,6 +150,13 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const style   = statusStyle(taskStatus);
   const rawText = output
     .map((line) => {

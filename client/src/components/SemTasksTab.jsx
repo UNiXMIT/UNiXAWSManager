@@ -56,6 +56,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
   const [taskStatus, setTaskStatus] = useState(task.status);
   const [loading, setLoading]     = useState(true);
   const [following, setFollowing] = useState(false);
+  const [isPinned, setIsPinned]   = useState(true);
   const bottomRef      = useRef(null);
   const containerRef   = useRef(null);
   const pollRef        = useRef(null);
@@ -137,7 +138,9 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
     const el = containerRef.current;
     if (!el) return;
     const onScroll = () => {
-      pinnedToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+      const pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+      pinnedToBottom.current = pinned;
+      setIsPinned(pinned);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -174,7 +177,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 w-screen h-screen bg-black/70 flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-gray-900 border border-gray-700 rounded-lg w-full max-w-4xl flex flex-col shadow-2xl"
@@ -189,7 +192,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
               <span className={`w-2 h-2 rounded-full ${style.dot} ${style.pulse ? 'animate-pulse' : ''}`} />
               <span className={`text-xs font-medium ${style.text}`}>{style.label}</span>
             </span>
-            {following && (
+            {following && isPinned && (
               <span className="text-xs text-yellow-400 animate-pulse flex-shrink-0">● Following…</span>
             )}
           </div>
@@ -359,7 +362,8 @@ export default function SemTasksTab({ notify }) {
       {/* Task table */}
       {tasks.length > 0 && (
         <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-400 border-b border-gray-700">
                 <th className="px-4 py-3 font-medium">ID</th>
@@ -424,6 +428,7 @@ export default function SemTasksTab({ notify }) {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

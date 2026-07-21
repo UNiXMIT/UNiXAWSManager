@@ -8,7 +8,7 @@ runOptions=(
 -e DEFAULT_REGION=eu-west-2
 -e DEFAULT_OWNER=SUPPORT
 -e SEMAPHORE_API_ENDPOINT=http://localhost:3000/api
--e SEMAPHORE_API_TOKEN="your_api_token_here"
+-e SEMAPHORE_API_TOKEN="yourAPIToken"
 -p 8989:3001
 --restart always
 --health-cmd "wget -qO- http://localhost:3001/api/health || exit 1"

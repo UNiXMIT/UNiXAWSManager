@@ -1,7 +1,7 @@
 #!/bin/bash
 
 containerName=awsmanager
-containerRepo=mf/awsmanager
+containerRepo=mf/awsmanager 
 runOptions=(
 -v /home/support/.aws:/root/.aws:ro,Z
 -e AWS_DEFAULT_REGION=eu-west-2

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-containerName=awsmanager
+containerName=awsmanager 
 containerRepo=mf/awsmanager 
 runOptions=(
 -v /home/support/.aws:/root/.aws:ro,Z 

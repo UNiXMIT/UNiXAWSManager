@@ -141,16 +141,37 @@ router.get('/sem', async (_req, res) => {
 // GET /api/instances/amis?region=
 router.get('/amis', async (req, res) => {
   const { region = DEFAULT_REGION } = req.query;
+  const mapImage = (img, r) => ({
+    imageId: img.ImageId,
+    name: img.Name,
+    owner: img.Tags?.find(t => t.Key === 'Owner')?.Value || '',
+    creationDate: img.CreationDate,
+    state: img.State,
+    region: r,
+  });
   try {
+    if (region === 'all') {
+      const regionsData = await getClient(DEFAULT_REGION).send(
+        new DescribeRegionsCommand({ Filters: [{ Name: 'opt-in-status', Values: ['opt-in-not-required', 'opted-in'] }] })
+      );
+      const allRegions = (regionsData.Regions || []).map(r => r.RegionName);
+      const perRegion = await Promise.all(
+        allRegions.map(async r => {
+          try {
+            const data = await getClient(r).send(new DescribeImagesCommand({ Owners: ['self'] }));
+            return (data.Images || []).map(img => mapImage(img, r));
+          } catch {
+            return []; // skip regions we can't access
+          }
+        })
+      );
+      const amis = perRegion.flat()
+        .sort((a, b) => (b.creationDate || '').localeCompare(a.creationDate || ''));
+      return res.json(amis);
+    }
     const data = await getClient(region).send(new DescribeImagesCommand({ Owners: ['self'] }));
     const amis = (data.Images || [])
-      .map(img => ({
-        imageId: img.ImageId,
-        name: img.Name,
-        owner: img.Tags?.find(t => t.Key === 'Owner')?.Value || '',
-        creationDate: img.CreationDate,
-        state: img.State,
-      }))
+      .map(img => mapImage(img, region))
       .sort((a, b) => (b.creationDate || '').localeCompare(a.creationDate || ''));
     res.json(amis);
   } catch (err) {

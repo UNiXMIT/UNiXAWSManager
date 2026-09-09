@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
+import StatCards from './StatCards';
 
 const STATE_COLORS = {
   running: 'bg-green-500',
@@ -30,6 +31,15 @@ export default function SemTab({ notify }) {
   };
 
   const total = results.reduce((n, r) => n + r.instances.length, 0);
+  const allInstances = results.flatMap(r => r.instances);
+  const running = allInstances.filter(i => i.state === 'running').length;
+  const stopped = allInstances.filter(i => i.state === 'stopped').length;
+  const stats = [
+    { label: 'Total', value: total },
+    { label: 'Regions', value: results.length, tone: 'accent' },
+    { label: 'Running', value: running, tone: 'running' },
+    { label: 'Stopped', value: stopped, tone: 'stopped' },
+  ];
 
   const refresh = async () => {
     const data = await api.listSem();
@@ -75,12 +85,22 @@ export default function SemTab({ notify }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+      <div className="brutal-card bg-surface border-l-4 border-l-amber-400 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-white uppercase tracking-tight">SEM Instances</h2>
+          <span className="brutal-badge bg-amber-400 text-black border-black">Advanced</span>
+        </div>
+        <p className="text-xs text-zinc-400 mt-1">
+          Advanced AWS management — operates on <span className="font-bold text-zinc-200">SEM*</span> instances across <span className="font-bold text-zinc-200">every region</span>. Actions here (including bulk terminate) apply account-wide, so proceed with care.
+        </p>
+      </div>
+
+      <div className="brutal-panel">
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={load}
             disabled={loading || busy}
-            className="bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-4 py-2 rounded text-sm font-medium transition-colors"
+            className="btn-accent"
           >
             {loading ? 'Loading…' : 'Load SEM Instances'}
           </button>
@@ -88,67 +108,68 @@ export default function SemTab({ notify }) {
             <button
               onClick={() => setConfirmTerminateAll(true)}
               disabled={loading || busy}
-              className="bg-red-800 hover:bg-red-700 disabled:opacity-50 px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
+              className="btn-danger"
             >
               ⚠ Terminate All SEM Instances
             </button>
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Queries <span className="text-gray-400">all available AWS regions</span> for instances with Name tag matching <code className="text-orange-300">SEM*</code>. Only regions with results are shown. This may take a few seconds.
+        <p className="text-xs text-zinc-500 mt-2">
+          Queries <span className="text-zinc-300">all available AWS regions</span> for instances with Name tag matching <code className="text-accent font-bold">SEM*</code>. Only regions with results are shown. This may take a few seconds.
         </p>
       </div>
 
       {results.length === 0 && !loading && (
-        <div className="text-center text-gray-500 py-16">
-          Click <span className="text-orange-400">Load SEM Instances</span> to query all regions
+        <div className="text-center text-zinc-500 py-16 font-medium">
+          Click <span className="text-accent font-bold">Load SEM Instances</span> to query all regions
         </div>
       )}
 
       {results.length > 0 && (
-        <div className="text-xs text-gray-400 px-1">{total} total SEM instance(s) across {results.length} regions</div>
+        <StatCards stats={stats} />
       )}
 
       {results.map(({ region, instances }) => (
-        <div key={region} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-          <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-            <h3 className="font-medium text-white text-sm">{region}</h3>
-            <span className="text-xs text-gray-400">{instances.length} instance(s)</span>
+        <div key={region} className="brutal-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2 border-edge flex items-center justify-between bg-surface">
+            <h3 className="font-bold text-white text-sm uppercase tracking-tight">{region}</h3>
+            <span className="text-xs text-zinc-400 font-bold">{instances.length} instance(s)</span>
           </div>
           {instances.length === 0 ? (
-            <p className="px-4 py-4 text-gray-500 text-sm">No SEM instances found in this region</p>
+            <p className="px-4 py-4 text-zinc-500 text-sm">No SEM instances found in this region</p>
           ) : (
+            <div className="overflow-auto max-h-[60vh]">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-400 border-b border-gray-700">
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Instance ID</th>
-                  <th className="px-4 py-3 font-medium">Owner</th>
-                  <th className="px-4 py-3 font-medium">State</th>
-                  <th className="px-4 py-3 font-medium">Launch Time</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <thead className="sticky top-0 z-10">
+                <tr className="text-left text-zinc-400 border-b-2 border-edge uppercase text-xs tracking-wider bg-surface">
+                  <th className="px-4 py-3 font-bold">Name</th>
+                  <th className="px-4 py-3 font-bold">Instance ID</th>
+                  <th className="px-4 py-3 font-bold">Owner</th>
+                  <th className="px-4 py-3 font-bold">State</th>
+                  <th className="px-4 py-3 font-bold">Launch Time</th>
+                  <th className="px-4 py-3 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {instances.map(inst => (
-                  <tr key={inst.instanceId} className="border-b border-gray-700 last:border-0 hover:bg-gray-700/50">
-                    <td className="px-4 py-3 text-white">{inst.name || '—'}</td>
-                    <td className="px-4 py-3 font-mono text-gray-300 text-xs">{inst.instanceId}</td>
-                    <td className="px-4 py-3 text-gray-300">{inst.owner || '—'}</td>
+                  <tr key={inst.instanceId} className="border-b border-zinc-800 last:border-0 hover:bg-surface">
+                    <td className="px-4 py-3 font-bold text-white">{inst.name || '—'}</td>
+                    <td className="px-4 py-3 font-mono text-zinc-300 text-xs">{inst.instanceId}</td>
+                    <td className="px-4 py-3 text-zinc-300">{inst.owner || '—'}</td>
                     <td className="px-4 py-3">
                       <span className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${STATE_COLORS[inst.state] || 'bg-gray-500'}`} />
-                        <span className="text-gray-300">{inst.state}</span>
+                        <span className={`w-2.5 h-2.5 border border-black flex-shrink-0 ${STATE_COLORS[inst.state] || 'bg-gray-500'}`} />
+                        <span className="text-zinc-300 font-medium">{inst.state}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
+                    <td className="px-4 py-3 text-zinc-400 text-xs">
                       {inst.launchTime ? new Date(inst.launchTime).toLocaleString('en-GB') : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setConfirmTerminate({ region, instance: inst })}
                         disabled={loading || busy}
-                        className="bg-red-900 hover:bg-red-800 disabled:opacity-50 border border-red-700 px-3 py-1.5 rounded text-xs font-medium transition-colors"
+                        className="btn-danger px-3 py-1.5 text-xs"
                       >
                         Terminate
                       </button>
@@ -157,6 +178,7 @@ export default function SemTab({ notify }) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       ))}

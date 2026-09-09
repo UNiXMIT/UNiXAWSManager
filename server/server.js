@@ -24,8 +24,8 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.get('/api/config', (_req, res) => {
   res.json({
-    defaultOwner: process.env.DEFAULT_OWNER || 'MTURNER',
-    defaultRegion: process.env.DEFAULT_REGION || 'eu-west-2',
+    defaultOwner: process.env.DEFAULT_OWNER || '',
+    defaultRegion: process.env.DEFAULT_REGION || 'all',
   });
 });
 

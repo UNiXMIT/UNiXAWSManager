@@ -52,7 +52,7 @@ export const api = {
   semGetProjectUsers: (projectId) => request('GET', `/semaphore/projects/${projectId}/users`),
   semStartTask: (projectId, templateId, vars) =>
     request('POST', `/semaphore/projects/${projectId}/tasks`, { templateId, ...vars }),
-  semGetLastTasks: (projectId) => request('GET', `/semaphore/projects/${projectId}/tasks/last`),
+  semGetLastTasks: (projectId, limit) => request('GET', `/semaphore/projects/${projectId}/tasks/last`, null, { limit }),
   semGetTask: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}`),
   semGetTaskOutput: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}/output`),
 

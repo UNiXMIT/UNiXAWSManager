@@ -115,8 +115,10 @@ router.post('/projects/:projectId/tasks', async (req, res) => {
 // NOTE: must be declared before /:taskId to avoid route shadowing
 router.get('/projects/:projectId/tasks/last', async (req, res) => {
   try {
+    const parsed = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 100) : 5;
     const tasks = await semFetch('GET', `/project/${req.params.projectId}/tasks/last`);
-    res.json((tasks || []).slice(0, 20));
+    res.json((tasks || []).slice(0, limit));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

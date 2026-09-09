@@ -2,13 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Dark theme (default) */
+  --ink: #0a0a0a;
+  --panel: #17171b;
+  --surface: #1e1e24;
+  --canvas: #0a0a0a;
+  --edge: #f4f4f5;
+  --shadow: #000;
+  --shadow-edge: #f4f4f5;
+  --fg: #fafafa;
+  --grid: rgba(255, 255, 255, 0.025);
+  --input-bg: #000000;
+  --input-fg: #fafafa;
+  --sb-track: #0a0a0a;
+  --sb-thumb: #52525b;
+}
+
+html.light {
+  /* Light theme */
+  --ink: #fafafa;
+  --panel: #ffffff;
+  --surface: #f4f4f5;
+  --canvas: #e8e8ea;
+  --edge: #0a0a0a;
+  --shadow: #0a0a0a;
+  --shadow-edge: #0a0a0a;
+  --fg: #0a0a0a;
+  --grid: rgba(0, 0, 0, 0.01);
+  --input-bg: #ffffff;
+  --input-fg: #0a0a0a;
+  --sb-track: #e8e8ea;
+  --sb-thumb: #a1a1aa;
+}
+
+@layer base {
+  html {
+    font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  }
+  body {
+    @apply bg-canvas;
+    color: var(--fg);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Surfaces: cards, panels, tables, modals */
+  .brutal-card {
+    @apply bg-panel border-2 border-edge rounded-none shadow-brutal-edge;
+  }
+  .brutal-panel {
+    @apply bg-panel border-2 border-edge rounded-none shadow-brutal-edge p-4;
+  }
+
+  /* Buttons — chunky, bold, hard-shadow with press interaction */
+  .btn-accent, .btn-neutral, .btn-danger,
+  .btn-success, .btn-warn, .btn-info {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-black rounded-none
+           px-4 py-2 text-sm font-bold uppercase tracking-tight leading-none
+           transition-all duration-100 select-none
+           shadow-[3px_3px_0_0_var(--shadow-edge)]
+           hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--shadow-edge)]
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-x-0
+           disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_0_var(--shadow-edge)];
+  }
+  .btn-accent  { @apply bg-accent text-black hover:bg-accent-hover; }
+  .btn-neutral { @apply bg-zinc-100 text-black hover:bg-white; }
+  .btn-danger  { @apply bg-red-500 text-black hover:bg-red-400; }
+  .btn-success { @apply bg-emerald-500 text-black hover:bg-emerald-400; }
+  .btn-warn    { @apply bg-amber-400 text-black hover:bg-amber-300; }
+  .btn-info    { @apply bg-sky-500 text-black hover:bg-sky-400; }
+
+  /* Form controls */
+  .brutal-input {
+    @apply border-2 border-edge rounded-none px-3 py-2 text-sm
+           placeholder-zinc-500 focus:outline-none focus:border-accent
+           focus:ring-2 focus:ring-accent/40 transition-colors;
+    background-color: var(--input-bg);
+    color: var(--input-fg);
+  }
+  .brutal-label {
+    @apply block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5;
+  }
+
+  /* Badges / chips */
+  .brutal-badge {
+    @apply inline-flex items-center gap-1.5 border-2 border-black rounded-none
+           px-2 py-0.5 text-xs font-bold uppercase tracking-wide;
+  }
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4b5563 #1f2937;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
 }
-*::-webkit-scrollbar { width: 6px; height: 6px; }
-*::-webkit-scrollbar-track { background: #1f2937; }
-*::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: var(--sb-track); }
+*::-webkit-scrollbar-thumb { background: var(--sb-thumb); border: 1px solid var(--shadow); }
 
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* Light-mode legibility: darken near-white content text.
+   Terminal-style regions opt out via .theme-term. */
+html.light .text-white,
+html.light .hover\:text-white:hover { color: #09090b; }
+html.light .text-zinc-100 { color: #18181b; }
+html.light .text-zinc-200 { color: #27272a; }
+html.light .text-zinc-300 { color: #3f3f46; }
+html.light .text-zinc-400 { color: #52525b; }
+
+/* Amber/yellow status labels: darker yellow for legibility on light surfaces. */
+html.light .text-yellow-300,
+html.light .text-amber-300,
+html.light .text-amber-400 { color: rgb(255 190 26); }
+
+html.light .theme-term .text-white { color: #fafafa; }
+html.light .theme-term .text-zinc-300 { color: #d4d4d8; }
+html.light .theme-term .text-zinc-400 { color: #a1a1aa; }
+html.light .theme-term .text-yellow-300,
+html.light .theme-term .text-amber-300,
+html.light .theme-term .text-amber-400 { color: #fbbf24; }

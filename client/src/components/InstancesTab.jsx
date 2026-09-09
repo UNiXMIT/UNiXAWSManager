@@ -4,6 +4,7 @@ import { useConfig } from '../context/ConfigContext';
 import InstanceTable from './InstanceTable';
 import InstanceActions from './InstanceActions';
 import ConfirmDialog from './ConfirmDialog';
+import StatCards from './StatCards';
 
 const REGIONS = [
   'all',
@@ -13,9 +14,7 @@ const REGIONS = [
 ];
 
 export default function InstancesTab({ notify }) {
-  const { defaultOwner, defaultRegion } = useConfig();
-  const [owner, setOwner] = useState(defaultOwner);
-  const [region, setRegion] = useState(defaultRegion);
+  const { owner, setOwner, region, setRegion } = useConfig();
   const [instances, setInstances] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -71,26 +70,35 @@ export default function InstancesTab({ notify }) {
     load();
   };
 
+  const running = instances.filter(i => i.state === 'running').length;
+  const stopped = instances.filter(i => i.state === 'stopped').length;
+  const stats = [
+    { label: 'Total', value: instances.length },
+    { label: 'Running', value: running, tone: 'running' },
+    { label: 'Stopped', value: stopped, tone: 'stopped' },
+    { label: 'Other', value: instances.length - running - stopped, tone: 'warn' },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="bg-gray-800 rounded-lg p-4 flex flex-wrap gap-3 items-end border border-gray-700">
+      <div className="brutal-panel flex flex-wrap gap-3 items-end">
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Owner Tag</label>
+          <label className="brutal-label">Owner Tag <span className="normal-case text-zinc-500 font-normal">(case sensitive)</span></label>
           <input
             value={owner}
             onChange={e => setOwner(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load()}
-            placeholder="MTURNER"
-            className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-400 w-36"
+            placeholder="BWAYNE"
+            className="brutal-input w-36"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Region</label>
+          <label className="brutal-label">Region</label>
           <select
             value={region}
             onChange={e => { setRegion(e.target.value); setInstances([]); setSelected(null); }}
-            className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+            className="brutal-input"
           >
             {REGIONS.map(r => <option key={r} value={r}>{r === 'all' ? 'All Regions' : r}</option>)}
           </select>
@@ -98,14 +106,14 @@ export default function InstancesTab({ notify }) {
         <button
           onClick={load}
           disabled={loading || !normalizedOwner}
-          className="bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-4 py-2 rounded text-sm font-medium transition-colors"
+          className="btn-accent"
         >
           {loading ? 'Loading…' : 'Load Instances'}
         </button>
         {instances.length > 0 && region !== 'all' && (
           <button
             onClick={() => setConfirmTermAll(true)}
-            className="ml-auto bg-red-800 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium transition-colors border border-red-600"
+            className="btn-danger ml-auto"
           >
             ⚠ Terminate All ({normalizedOwner})
           </button>
@@ -113,24 +121,34 @@ export default function InstancesTab({ notify }) {
       </div>
 
       {instances.length === 0 && !loading && (
-        <div className="text-center text-gray-500 py-16">
-          Enter an owner tag and click <span className="text-orange-400">Load Instances</span>
+        <div className="text-center text-zinc-500 py-16 font-medium">
+          Enter an owner tag and click <span className="text-accent font-bold">Load Instances</span>
         </div>
       )}
 
       {instances.length > 0 && (
-        <InstanceTable instances={instances} selected={selected} onSelect={setSelected} />
+        <StatCards stats={stats} />
       )}
 
-      {selected && (
-        <InstanceActions
-          instance={selected}
-          region={region === 'all' ? (selected.region || region) : region}
-          notify={notify}
-          terminateScope={{ owner: selected.owner || normalizedOwner }}
-          onDone={handleDone}
-          onClose={() => setSelected(null)}
-        />
+      {instances.length > 0 && (
+        <div className="flex flex-col xl:flex-row gap-4 items-start">
+          <div className="w-full min-w-0 flex-1">
+            <InstanceTable instances={instances} selected={selected} onSelect={setSelected} />
+          </div>
+
+          {selected && (
+            <div className="w-full xl:w-[480px] xl:shrink-0 xl:sticky xl:top-[90px] xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto scrollbar-none">
+              <InstanceActions
+                instance={selected}
+                region={region === 'all' ? (selected.region || region) : region}
+                notify={notify}
+                terminateScope={{ owner: selected.owner || normalizedOwner }}
+                onDone={handleDone}
+                onClose={() => setSelected(null)}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {confirmTermAll && (

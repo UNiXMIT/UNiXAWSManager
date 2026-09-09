@@ -4,9 +4,9 @@ containerName=awsmanager
 containerRepo=mf/awsmanager 
 runOptions=(
 -v /home/support/.aws:/root/.aws:ro,Z 
--e AWS_DEFAULT_REGION=eu-west-2
--e DEFAULT_REGION=eu-west-2
--e DEFAULT_OWNER=SUPPORT
+# -e AWS_DEFAULT_REGION=eu-west-2
+# -e DEFAULT_REGION=all
+# -e DEFAULT_OWNER=
 -e SEMAPHORE_API_ENDPOINT=http://localhost:3000/api
 -e SEMAPHORE_API_TOKEN="yourAPIToken"
 -p 8989:3001

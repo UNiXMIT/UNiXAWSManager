@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 
 const REGIONS = [
@@ -17,23 +17,23 @@ function TemplateCard({ template, isSelected, onSelect }) {
   return (
     <button
       onClick={() => onSelect(isSelected ? null : template)}
-      className={`w-full text-left px-4 py-3.5 rounded-lg border transition-all duration-150 flex items-center justify-between gap-3 group ${
+      className={`w-full text-left px-4 py-3.5 border-2 transition-all duration-100 flex items-center justify-between gap-3 group ${
         isSelected
-          ? 'bg-orange-950/40 border-orange-500/70 shadow-sm shadow-orange-900/30'
-          : 'bg-gray-800/70 border-gray-700/60 hover:bg-gray-800 hover:border-gray-600'
+          ? 'bg-accent/20 border-accent shadow-brutal-sm'
+          : 'bg-panel border-edge hover:-translate-y-px hover:shadow-brutal-sm'
       }`}
     >
       <div className="min-w-0">
-        <span className={`font-medium text-sm leading-snug ${isSelected ? 'text-orange-200' : 'text-gray-100'}`}>
+        <span className={`font-bold text-sm leading-snug uppercase tracking-tight ${isSelected ? 'text-accent' : 'text-zinc-100'}`}>
           {name}
         </span>
         {subtitle && (
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>
+          <p className="text-xs text-zinc-500 mt-0.5 truncate normal-case">{subtitle}</p>
         )}
       </div>
       <svg
-        className={`w-4 h-4 flex-shrink-0 transition-colors ${isSelected ? 'text-orange-400' : 'text-gray-600 group-hover:text-gray-400'}`}
-        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        className={`w-4 h-4 flex-shrink-0 transition-colors ${isSelected ? 'text-accent' : 'text-zinc-600 group-hover:text-zinc-400'}`}
+        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
       >
         {isSelected
           ? <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
@@ -71,28 +71,28 @@ function LaunchPanel({ template, projectId, onSuccess, onCancel, notify }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-1 rounded-b-lg border border-t-0 border-orange-500/40 bg-gray-900/60 px-4 py-4"
+      className="mt-0 border-2 border-t-0 border-accent bg-surface px-4 py-4"
     >
       <div className="flex flex-wrap items-end gap-5">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">VM Count</label>
+          <label className="brutal-label mb-0">VM Count</label>
           <input
             type="number"
             min={1}
             max={50}
             value={vmCount}
             onChange={(e) => setVmCount(parseInt(e.target.value, 10) || 1)}
-            className="w-24 bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/30 transition-colors"
+            className="brutal-input w-24"
             disabled={launching}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">AWS Region</label>
+          <label className="brutal-label mb-0">AWS Region</label>
           <select
             value={region}
             onChange={(e) => setRegion(parseInt(e.target.value, 10))}
-            className="bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/30 transition-colors"
+            className="brutal-input"
             disabled={launching}
           >
             {REGIONS.map((r) => (
@@ -105,7 +105,7 @@ function LaunchPanel({ template, projectId, onSuccess, onCancel, notify }) {
           <button
             type="submit"
             disabled={launching}
-            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 px-4 py-2 rounded-md text-sm font-semibold transition-colors shadow-sm"
+            className="btn-accent"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z"/>
@@ -116,7 +116,7 @@ function LaunchPanel({ template, projectId, onSuccess, onCancel, notify }) {
             type="button"
             onClick={onCancel}
             disabled={launching}
-            className="px-4 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="btn-neutral"
           >
             Cancel
           </button>
@@ -136,6 +136,16 @@ export default function SemaphoreTab({ notify }) {
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [query, setQuery] = useState('');
+
+  const filteredTemplates = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return templates;
+    return templates.filter((t) =>
+      templateName(t).toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q)
+    );
+  }, [templates, query]);
 
   useEffect(() => {
     const init = async () => {
@@ -180,6 +190,7 @@ export default function SemaphoreTab({ notify }) {
     setLoaded(true);
     setTemplates([]);
     setSelectedTemplate(null);
+    setQuery('');
     setLoadingTemplates(true);
     try {
       const all = await api.semGetTemplates(selectedProject.id);
@@ -194,15 +205,15 @@ export default function SemaphoreTab({ notify }) {
   const isLoading = loadingViews || loadingTemplates;
   const canLoad = !!selectedViewId && !isLoading;
 
-  const selectClass = 'bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/30 transition-colors disabled:opacity-50';
+  const selectClass = 'brutal-input disabled:opacity-50';
 
   return (
     <div className="space-y-5">
       {/* Toolbar */}
-      <div className="bg-gray-800 rounded-lg p-4 flex flex-wrap gap-3 items-end border border-gray-700">
+      <div className="brutal-panel flex flex-wrap gap-3 items-end">
         {projects.length > 1 && (
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Project</label>
+            <label className="brutal-label">Project</label>
             <select
               value={selectedProject?.id ?? ''}
               onChange={(e) => {
@@ -221,7 +232,7 @@ export default function SemaphoreTab({ notify }) {
         )}
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">View</label>
+          <label className="brutal-label">View</label>
           <select
             value={selectedViewId}
             onChange={(e) => {
@@ -245,7 +256,7 @@ export default function SemaphoreTab({ notify }) {
         <button
           onClick={loadTemplates}
           disabled={!canLoad}
-          className="bg-orange-500 hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 rounded-md text-sm font-semibold transition-colors shadow-sm"
+          className="btn-accent"
         >
           {loadingTemplates ? 'Loading…' : 'Load Semaphore Tasks'}
         </button>
@@ -255,11 +266,11 @@ export default function SemaphoreTab({ notify }) {
 
       {/* Empty / loading state */}
       {!loaded && (
-        <div className="text-center text-gray-500 py-16">
+        <div className="text-center text-zinc-500 py-16 font-medium">
           {loadingViews
             ? 'Loading views…'
             : views.length > 0
-            ? <>Select a view and click <span className="text-orange-400">Load Semaphore Tasks</span></>
+            ? <>Select a view and click <span className="text-accent font-bold">Load Semaphore Tasks</span></>
             : 'No Semaphore views available'}
         </div>
       )}
@@ -268,26 +279,50 @@ export default function SemaphoreTab({ notify }) {
       {loaded && !loadingTemplates && (
         <div className="space-y-2">
           {templates.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-12">No task templates in this view.</p>
+            <p className="text-sm text-zinc-500 text-center py-12">No task templates in this view.</p>
           ) : (
-            templates.map((tmpl) => (
-              <div key={tmpl.id}>
-                <TemplateCard
-                  template={tmpl}
-                  isSelected={selectedTemplate?.id === tmpl.id}
-                  onSelect={setSelectedTemplate}
-                />
-                {selectedTemplate?.id === tmpl.id && (
-                  <LaunchPanel
-                    template={tmpl}
-                    projectId={selectedProject.id}
-                    notify={notify}
-                    onSuccess={() => setSelectedTemplate(null)}
-                    onCancel={() => setSelectedTemplate(null)}
+            <>
+              <div className="brutal-panel flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[12rem]">
+                  <label className="brutal-label">Search Tasks</label>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Filter by name or description…"
+                    className="brutal-input w-full"
                   />
+                </div>
+                {query && (
+                  <button onClick={() => setQuery('')} className="btn-neutral">Clear</button>
                 )}
+                <span className="text-xs text-zinc-500 uppercase font-bold tracking-wider pb-2.5 ml-auto">
+                  {filteredTemplates.length} of {templates.length} task(s)
+                </span>
               </div>
-            ))
+
+              {filteredTemplates.length === 0 ? (
+                <p className="text-sm text-zinc-500 text-center py-12">No tasks match your search.</p>
+              ) : (
+                filteredTemplates.map((tmpl) => (
+                  <div key={tmpl.id}>
+                    <TemplateCard
+                      template={tmpl}
+                      isSelected={selectedTemplate?.id === tmpl.id}
+                      onSelect={setSelectedTemplate}
+                    />
+                    {selectedTemplate?.id === tmpl.id && (
+                      <LaunchPanel
+                        template={tmpl}
+                        projectId={selectedProject.id}
+                        notify={notify}
+                        onSuccess={() => setSelectedTemplate(null)}
+                        onCancel={() => setSelectedTemplate(null)}
+                      />
+                    )}
+                  </div>
+                ))
+              )}
+            </>
           )}
         </div>
       )}

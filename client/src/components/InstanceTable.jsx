@@ -51,14 +51,14 @@ function CopyableIp({ ip }) {
 
   return (
     <span className="flex items-center gap-1.5 group">
-      <span className="font-mono text-gray-300">{ip}</span>
+      <span className="font-mono text-zinc-200">{ip}</span>
       <button
         onClick={copy}
         title="Copy IP"
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-orange-400"
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-accent"
       >
         {copied ? (
-          <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         ) : (
@@ -74,18 +74,18 @@ function CopyableIp({ ip }) {
 
 export default function InstanceTable({ instances, selected, onSelect }) {
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+    <div className="brutal-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-400 border-b border-gray-700 bg-gray-800">
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Instance ID</th>
-              <th className="px-4 py-3 font-medium">State</th>
-              <th className="px-4 py-3 font-medium">Public IP</th>
-              <th className="px-4 py-3 font-medium">Private IP</th>
-              <th className="px-4 py-3 font-medium">Owner</th>
-              <th className="px-4 py-3 font-medium">SemStatus</th>
+            <tr className="text-left text-zinc-400 border-b-2 border-edge bg-surface uppercase text-xs tracking-wider">
+              <th className="px-4 py-3 font-bold">Name</th>
+              <th className="px-4 py-3 font-bold">Instance ID</th>
+              <th className="px-4 py-3 font-bold">State</th>
+              <th className="px-4 py-3 font-bold">Public IP</th>
+              <th className="px-4 py-3 font-bold">Private IP</th>
+              <th className="px-4 py-3 font-bold">Owner</th>
+              <th className="px-4 py-3 font-bold">SemStatus</th>
             </tr>
           </thead>
           <tbody>
@@ -93,24 +93,24 @@ export default function InstanceTable({ instances, selected, onSelect }) {
               <tr
                 key={inst.instanceId}
                 onClick={() => onSelect(inst.instanceId === selected?.instanceId ? null : inst)}
-                className={`border-b border-gray-700 last:border-0 cursor-pointer transition-colors ${
+                className={`border-b border-zinc-800 last:border-0 cursor-pointer transition-colors ${
                   selected?.instanceId === inst.instanceId
-                    ? 'bg-orange-900/30 border-l-2 border-l-orange-400'
-                    : 'hover:bg-gray-700/50'
+                    ? 'bg-accent/20 border-l-4 border-l-accent'
+                    : 'hover:bg-surface'
                 }`}
               >
-                <td className="px-4 py-3 font-medium text-white">{inst.name || '—'}</td>
-                <td className="px-4 py-3 font-mono text-gray-300 text-xs">{inst.instanceId}</td>
+                <td className="px-4 py-3 font-bold text-white">{inst.name || '—'}</td>
+                <td className="px-4 py-3 font-mono text-zinc-300 text-xs">{inst.instanceId}</td>
                 <td className="px-4 py-3">
                   <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${STATE_COLORS[inst.state] || 'bg-gray-500'}`} />
-                    <span className="text-gray-300">{inst.state}</span>
+                    <span className={`w-2.5 h-2.5 border border-black flex-shrink-0 ${STATE_COLORS[inst.state] || 'bg-gray-500'}`} />
+                    <span className="text-zinc-300 font-medium">{inst.state}</span>
                   </span>
                 </td>
                 <td className="px-4 py-3 text-xs"><CopyableIp ip={inst.publicIp} /></td>
                 <td className="px-4 py-3 text-xs"><CopyableIp ip={inst.privateIp} /></td>
-                <td className="px-4 py-3 text-gray-300">{inst.owner || '—'}</td>
-                <td className="px-4 py-3 text-gray-300">{inst.semStatus || '—'}</td>
+                <td className="px-4 py-3 text-zinc-300">{inst.owner || '—'}</td>
+                <td className="px-4 py-3 text-zinc-300">{inst.semStatus || '—'}</td>
               </tr>
             ))}
           </tbody>

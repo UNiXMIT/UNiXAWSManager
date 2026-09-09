@@ -28,9 +28,9 @@ function CopyButton({ value }) {
   };
 
   return (
-    <button onClick={copy} title="Copy" className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-orange-400">
+    <button onClick={copy} title="Copy" className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-accent">
       {copied ? (
-        <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+        <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       ) : (
@@ -45,19 +45,49 @@ function CopyButton({ value }) {
 
 function ActionButton({ label, onClick, loading, color = 'blue' }) {
   const colors = {
-    blue:   'bg-blue-700 hover:bg-blue-600',
-    green:  'bg-[#45A56F] hover:bg-[#3d9463]',
-    yellow: 'bg-[#F9B13A] hover:bg-[#e09a28] text-gray-900',
-    red:    'bg-[#D90000] hover:bg-[#b80000]',
+    blue:   'btn-info',
+    green:  'btn-success',
+    yellow: 'btn-warn',
+    red:    'btn-danger',
   };
   return (
     <button
       onClick={onClick}
       disabled={!!loading}
-      className={`px-3 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 ${colors[color]}`}
+      className={`${colors[color]} px-3 py-1.5 text-xs`}
     >
       {loading ? '…' : label}
     </button>
+  );
+}
+
+const STATE_BADGE = {
+  running: 'bg-emerald-500 text-black',
+  stopped: 'bg-red-500 text-black',
+  pending: 'bg-amber-400 text-black',
+  stopping: 'bg-amber-400 text-black',
+  'shutting-down': 'bg-amber-400 text-black',
+  terminated: 'bg-zinc-500 text-black',
+};
+
+function DetailField({ label, value, mono, copy }) {
+  if (!value) return null;
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{label}</dt>
+      <dd className={`group flex items-center gap-1.5 text-sm text-zinc-100 ${mono ? 'font-mono' : ''}`}>
+        <span className="truncate">{value}</span>
+        {copy && <CopyButton value={value} />}
+      </dd>
+    </div>
+  );
+}
+
+function ProtectionBadge({ on, label }) {
+  return (
+    <span className={`brutal-badge ${on ? 'bg-emerald-500 text-black border-black' : 'bg-ink text-zinc-400 border-edge'}`}>
+      {label}: {on ? 'ON' : 'OFF'}
+    </span>
   );
 }
 
@@ -66,7 +96,7 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
   const [newName, setNewName] = useState(instance.name);
   const [newOwner, setNewOwner] = useState(instance.owner);
   const [confirmTerminate, setConfirmTerminate] = useState(false);
-  const [showSgs, setShowSgs] = useState(false);
+  const [selectedSgId, setSelectedSgId] = useState('');
   const [protection, setProtection] = useState(null);
 
   useEffect(() => {
@@ -89,39 +119,41 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-600 overflow-hidden">
+    <div className="brutal-card overflow-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between px-5 py-4 border-b border-gray-700">
-        <div>
-          <h2 className="text-base font-semibold text-white">{instance.name || instance.instanceId}</h2>
-          <p className="text-xs font-mono text-gray-400 mt-0.5">{instance.instanceId}</p>
-          <div className="flex flex-wrap gap-4 mt-1.5 text-xs text-gray-500">
-            {instance.publicIp && <span className="group flex items-center gap-1">Public IP: <span className="text-gray-300 font-mono">{instance.publicIp}</span><CopyButton value={instance.publicIp} /></span>}
-            {instance.privateIp && <span className="group flex items-center gap-1">Private IP: <span className="text-gray-300 font-mono">{instance.privateIp}</span><CopyButton value={instance.privateIp} /></span>}
-            {instance.instanceType && <span>Type: <span className="text-gray-300">{instance.instanceType}</span></span>}
-            {region && <span>Region: <span className="text-gray-300 font-mono">{region}</span></span>}
-            {instance.vpcId && <span>VPC: <span className="text-gray-300 font-mono">{instance.vpcId}</span></span>}
-            {instance.publicDns && <span className="group flex items-center gap-1">Public DNS: <span className="text-gray-300 font-mono">{instance.publicDns}</span><CopyButton value={instance.publicDns} /></span>}
-            {instance.privateDns && <span className="group flex items-center gap-1">Private DNS: <span className="text-gray-300 font-mono">{instance.privateDns}</span><CopyButton value={instance.privateDns} /></span>}
-            {protection && (
-              <span className={`font-medium ${protection.terminationProtection ? 'text-[#45A56F]' : 'text-gray-600'}`}>
-                Termination Protection: {protection.terminationProtection ? 'ON' : 'OFF'}
-              </span>
-            )}
-            {protection && (
-              <span className={`font-medium ${protection.stopProtection ? 'text-[#45A56F]' : 'text-gray-600'}`}>
-                Stop Protection: {protection.stopProtection ? 'ON' : 'OFF'}
-              </span>
-            )}
+      <div className="px-5 py-4 border-b-2 border-edge bg-surface">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold text-white uppercase tracking-tight truncate">{instance.name || instance.instanceId}</h2>
+            <p className="text-xs font-mono text-zinc-400 mt-0.5">{instance.instanceId}</p>
           </div>
+          <button onClick={onClose} className="text-zinc-400 hover:text-white text-xl leading-none shrink-0">✕</button>
         </div>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none ml-4">✕</button>
+
+        <div className="flex flex-wrap gap-2 mt-3">
+          {instance.state && (
+            <span className={`brutal-badge border-black ${STATE_BADGE[instance.state] || 'bg-zinc-500 text-black'}`}>{instance.state}</span>
+          )}
+          {protection && <ProtectionBadge on={protection.terminationProtection} label="Term Protect" />}
+          {protection && <ProtectionBadge on={protection.stopProtection} label="Stop Protect" />}
+        </div>
+
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 mt-4">
+          <DetailField label="Type" value={instance.instanceType} />
+          <DetailField label="Region" value={region} mono />
+          <DetailField label="Owner" value={instance.owner} />
+          <DetailField label="Public IP" value={instance.publicIp} mono copy />
+          <DetailField label="Private IP" value={instance.privateIp} mono copy />
+          <DetailField label="VPC" value={instance.vpcId} mono />
+          <DetailField label="Public DNS" value={instance.publicDns} mono copy />
+          <DetailField label="Private DNS" value={instance.privateDns} mono copy />
+        </dl>
       </div>
 
       <div className="p-5 space-y-5">
         {/* Power */}
         <section>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Power</h3>
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Power</h3>
           <div className="flex flex-wrap gap-2">
             <ActionButton label="Start" loading={busy === 'Start'} color="green"
               onClick={() => run('Start', () => api.startInstance(instance.instanceId, region), true)} />
@@ -134,12 +166,12 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
 
         {/* Rename */}
         <section>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Rename</h3>
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Rename</h3>
           <div className="flex gap-2">
             <input
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-400 flex-1 max-w-xs"
+              className="brutal-input flex-1 max-w-xs"
             />
             <ActionButton label="Rename" loading={busy === 'Rename'}
               onClick={() => run('Rename', () => api.renameInstance(instance.instanceId, newName, region))} />
@@ -148,12 +180,12 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
 
         {/* Change Owner */}
         <section>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Change Owner</h3>
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Change Owner</h3>
           <div className="flex gap-2">
             <input
               value={newOwner}
               onChange={e => setNewOwner(e.target.value)}
-              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-400 flex-1 max-w-xs"
+              className="brutal-input flex-1 max-w-xs"
             />
             <ActionButton label="Change Owner" loading={busy === 'Change Owner'}
               onClick={() => run('Change Owner', () => api.changeOwner(instance.instanceId, newOwner, region))} />
@@ -162,7 +194,7 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
 
         {/* Protection */}
         <section>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Stop / Terminate Protection</h3>
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Stop / Terminate Protection</h3>
           <div className="flex gap-2">
             <ActionButton label="Enable Protection" loading={busy === 'Enable Protection'}
               onClick={() => run('Enable Protection', () => api.setProtection(instance.instanceId, true, region))} />
@@ -173,34 +205,52 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
 
         {/* Security Groups */}
         <section>
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Security Groups</h3>
-            <button
-              onClick={() => setShowSgs(v => !v)}
-              className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
-            >
-              {showSgs ? '▲ Hide' : '▼ Manage'}
-            </button>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Security Groups</h3>
+            {instance.securityGroups.length > 0 && (
+              <span className="text-[10px] uppercase tracking-wider text-zinc-600">Click a group to inspect &amp; manage</span>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {instance.securityGroups.length > 0 ? instance.securityGroups.map(sg => (
-              <span key={sg.groupId} className="bg-gray-700 border border-gray-600 px-2 py-1 rounded text-xs font-mono text-gray-300">
-                {sg.groupId} <span className="text-gray-500">({sg.groupName})</span>
-              </span>
-            )) : <span className="text-xs text-gray-500">No security groups</span>}
-          </div>
-          {showSgs && (
-            <SecurityGroupPanel instance={instance} region={region} notify={notify} />
+          {instance.securityGroups.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {instance.securityGroups.map(sg => {
+                const active = selectedSgId === sg.groupId;
+                return (
+                  <button
+                    key={sg.groupId}
+                    onClick={() => setSelectedSgId(active ? '' : sg.groupId)}
+                    title={sg.groupName}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 border-2 text-xs font-mono font-bold transition-colors ${
+                      active
+                        ? 'bg-accent text-black border-black'
+                        : 'bg-ink text-zinc-200 border-edge hover:border-accent'
+                    }`}
+                  >
+                    <span>{sg.groupId}</span>
+                    {sg.groupName && <span className={active ? 'text-black/70' : 'text-zinc-500'}>{sg.groupName}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500">No security groups attached</p>
           )}
+          <SecurityGroupPanel
+            instance={instance}
+            region={region}
+            notify={notify}
+            selectedSgId={selectedSgId}
+            setSelectedSgId={setSelectedSgId}
+          />
         </section>
 
         {/* Danger Zone */}
-        <section className="border-t border-gray-700 pt-4">
-          <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">Danger Zone</h3>
+        <section className="border-t-2 border-edge pt-4">
+          <h3 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-2">Danger Zone</h3>
           <button
             onClick={() => setConfirmTerminate(true)}
             disabled={!!busy}
-            className="bg-red-900 hover:bg-red-800 border border-red-700 px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50"
+            className="btn-danger"
           >
             ⚠ Terminate Instance
           </button>

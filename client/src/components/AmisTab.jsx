@@ -13,7 +13,7 @@ const REGIONS = [
 const COLUMNS = [
   { key: 'name',         label: 'Name' },
   { key: 'imageId',      label: 'Image ID' },
-  { key: 'owner',        label: 'Owner Tag' },
+  { key: 'owner',        label: 'Owner' },
   { key: 'region',       label: 'Region' },
   { key: 'state',        label: 'State' },
   { key: 'creationDate', label: 'Created' },
@@ -50,7 +50,7 @@ export default function AmisTab({ notify }) {
       amis.map(a => ({
         Name: a.name,
         'Image ID': a.imageId,
-        'Owner Tag': a.owner,
+        Owner: a.owner,
         Region: a.region,
         State: a.state,
         Created: a.creationDate ? new Date(a.creationDate).toLocaleDateString('en-GB') : '',

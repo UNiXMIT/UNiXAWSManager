@@ -26,7 +26,7 @@ export default function InstancesTab({ notify }) {
     if (!normalizedOwner) {
       setInstances([]);
       setSelected(null);
-      notify('Owner tag is required', 'error');
+      notify('Owner is required', 'error');
       return;
     }
 
@@ -45,7 +45,7 @@ export default function InstancesTab({ notify }) {
 
   const handleTerminateAll = async () => {
     if (!normalizedOwner) {
-      notify('Owner tag is required', 'error');
+      notify('Owner is required', 'error');
       setConfirmTermAll(false);
       return;
     }
@@ -84,7 +84,7 @@ export default function InstancesTab({ notify }) {
       {/* Filter bar — extra bottom padding (md+) leaves room for the absolute caption */}
       <div className="brutal-panel flex flex-wrap gap-3 items-end md:pb-8">
         <div className="relative">
-          <label className="brutal-label">Owner Tag</label>
+          <label className="brutal-label">Owner</label>
           <input
             value={owner}
             onChange={e => setOwner(e.target.value)}
@@ -123,7 +123,7 @@ export default function InstancesTab({ notify }) {
 
       {instances.length === 0 && !loading && (
         <div className="text-center text-zinc-500 py-16 font-medium">
-          Enter an owner tag and click <span className="text-accent font-bold">Load Instances</span>
+          Enter an owner and click <span className="text-accent font-bold">Load Instances</span>
         </div>
       )}
 

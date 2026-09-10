@@ -1,5 +1,15 @@
 const BASE = '/api';
 
+export const SEM_TOKEN_KEY = 'awsmanager.semToken';
+
+function readSemToken() {
+  try {
+    return localStorage.getItem(SEM_TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
 async function request(method, path, body = null, params = null) {
   const url = new URL(BASE + path, window.location.origin);
   if (params) {
@@ -8,6 +18,11 @@ async function request(method, path, body = null, params = null) {
     });
   }
   const opts = { method, headers: {} };
+  // Attach the per-browser Semaphore token only to Semaphore endpoints.
+  if (path.startsWith('/semaphore')) {
+    const semToken = readSemToken();
+    if (semToken) opts.headers['x-semaphore-token'] = semToken;
+  }
   if (body) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);

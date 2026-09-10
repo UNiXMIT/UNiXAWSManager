@@ -81,10 +81,10 @@ export default function InstancesTab({ notify }) {
 
   return (
     <div className="space-y-4">
-      {/* Filter bar */}
-      <div className="brutal-panel flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="brutal-label">Owner Tag <span className="normal-case text-zinc-500 font-normal">(case sensitive)</span></label>
+      {/* Filter bar — extra bottom padding (md+) leaves room for the absolute caption */}
+      <div className="brutal-panel flex flex-wrap gap-3 items-end md:pb-8">
+        <div className="relative">
+          <label className="brutal-label">Owner Tag</label>
           <input
             value={owner}
             onChange={e => setOwner(e.target.value)}
@@ -92,6 +92,7 @@ export default function InstancesTab({ notify }) {
             placeholder="BWAYNE"
             className="brutal-input w-36"
           />
+          <p className="static md:absolute left-0 md:top-full mt-1 text-xs text-zinc-500">(case sensitive)</p>
         </div>
         <div>
           <label className="brutal-label">Region</label>

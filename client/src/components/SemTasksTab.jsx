@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api/client';
+import SemTokenField from './SemTokenField';
 
 // Strip ANSI color/format escape sequences so raw Ansible output renders cleanly
 function stripAnsi(str) {
@@ -175,7 +177,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
   const outputText = rawText.replace(/([^\n])\n(\[\d{2}:\d{2}:\d{2}] )?(TASK |PLAY )/g, '$1\n\n$2$3');
   const templateName = task._templateName || task.message || task.name || task.template?.name || (task.template_id ? `Template #${task.template_id}` : 'Unknown Task');
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 w-screen h-screen bg-black/70 flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -201,7 +203,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white p-1 hover:bg-black transition-colors ml-3 flex-shrink-0"
+            className="text-zinc-400 hover:text-white p-1 transition-colors ml-3 flex-shrink-0"
             aria-label="Close"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -256,7 +258,8 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -346,6 +349,9 @@ export default function SemTasksTab({ notify }) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="brutal-panel">
+        <div className="mb-3 pb-3 border-b-2 border-edge">
+          <SemTokenField />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           {projects.length > 1 && (
             <select

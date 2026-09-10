@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
+import { useConfig } from '../context/ConfigContext';
+import SemTokenField from './SemTokenField';
 
 const REGIONS = [
   { label: 'EU', value: 1 },
@@ -127,6 +129,9 @@ function LaunchPanel({ template, projectId, onSuccess, onCancel, notify }) {
 }
 
 export default function SemaphoreTab({ notify }) {
+  const { semToken } = useConfig();
+  const notifyRef = useRef(notify);
+  notifyRef.current = notify;
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [views, setViews] = useState([]);
@@ -148,6 +153,8 @@ export default function SemaphoreTab({ notify }) {
   }, [templates, query]);
 
   useEffect(() => {
+    // Don't attempt to load anything until a token is configured.
+    if (!semToken) return;
     const init = async () => {
       setLoadingViews(true);
       try {
@@ -160,13 +167,13 @@ export default function SemaphoreTab({ notify }) {
           setViews(viewData || []);
         }
       } catch (err) {
-        notify(err.message, 'error');
+        notifyRef.current(err.message, 'error');
       } finally {
         setLoadingViews(false);
       }
     };
     init();
-  }, [notify]);
+  }, [semToken]);
 
   const fetchViewsForProject = useCallback(async (project) => {
     setSelectedProject(project);
@@ -179,11 +186,11 @@ export default function SemaphoreTab({ notify }) {
       const viewData = await api.semGetViews(project.id);
       setViews(viewData || []);
     } catch (err) {
-      notify(err.message, 'error');
+      notifyRef.current(err.message, 'error');
     } finally {
       setLoadingViews(false);
     }
-  }, [notify]);
+  }, []);
 
   const loadTemplates = async () => {
     if (!selectedProject || !selectedViewId) return;
@@ -194,7 +201,14 @@ export default function SemaphoreTab({ notify }) {
     setLoadingTemplates(true);
     try {
       const all = await api.semGetTemplates(selectedProject.id);
-      setTemplates((all || []).filter((t) => t.view_id === parseInt(selectedViewId, 10)));
+      // An "All" view isn't tagged onto templates, so show everything unfiltered.
+      const selView = views.find((v) => String(v.id) === String(selectedViewId));
+      const isAllView = /^all$/i.test((selView?.title || '').trim());
+      setTemplates(
+        isAllView
+          ? (all || [])
+          : (all || []).filter((t) => t.view_id === parseInt(selectedViewId, 10))
+      );
     } catch (err) {
       notify(err.message, 'error');
     } finally {
@@ -210,7 +224,11 @@ export default function SemaphoreTab({ notify }) {
   return (
     <div className="space-y-5">
       {/* Toolbar */}
-      <div className="brutal-panel flex flex-wrap gap-3 items-end">
+      <div className="brutal-panel">
+        <div className="mb-3 pb-3 border-b-2 border-edge">
+          <SemTokenField />
+        </div>
+        <div className="flex flex-wrap gap-3 items-end">
         {projects.length > 1 && (
           <div>
             <label className="brutal-label">Project</label>
@@ -262,6 +280,7 @@ export default function SemaphoreTab({ notify }) {
         </button>
 
 
+        </div>
       </div>
 
       {/* Empty / loading state */}

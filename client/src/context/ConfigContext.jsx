@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, SEM_TOKEN_KEY } from '../api/client';
 
 const FALLBACK = { defaultOwner: '', defaultRegion: 'all' };
 const OWNER_KEY = 'awsmanager.owner';
@@ -9,8 +9,10 @@ const ConfigContext = createContext({
   ...FALLBACK,
   owner: '',
   region: 'all',
+  semToken: '',
   setOwner: () => {},
   setRegion: () => {},
+  setSemToken: () => {},
 });
 
 function readStored(key) {
@@ -38,6 +40,7 @@ function ConfigInner({ config, children }) {
   const [region, setRegionState] = useState(() => {
     return readStored(REGION_KEY) || config.defaultRegion;
   });
+  const [semToken, setSemTokenState] = useState(() => readStored(SEM_TOKEN_KEY) || '');
 
   const setOwner = (value) => {
     setOwnerState(value);
@@ -47,8 +50,12 @@ function ConfigInner({ config, children }) {
     setRegionState(value);
     writeStored(REGION_KEY, value);
   };
+  const setSemToken = (value) => {
+    setSemTokenState(value);
+    writeStored(SEM_TOKEN_KEY, value);
+  };
 
-  const value = { ...config, owner, region, setOwner, setRegion };
+  const value = { ...config, owner, region, semToken, setOwner, setRegion, setSemToken };
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
 }
 

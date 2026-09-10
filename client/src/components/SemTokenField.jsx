@@ -11,13 +11,13 @@ export default function SemTokenField() {
   return (
     <div>
       <label className="brutal-label">Semaphore API Token</label>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <input
           type={show ? 'text' : 'password'}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Semaphore API token"
-          className="brutal-input w-52"
+          className="brutal-input flex-1 min-w-0 sm:flex-none sm:w-52"
           autoComplete="off"
           spellCheck={false}
         />

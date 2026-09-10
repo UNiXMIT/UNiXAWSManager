@@ -1,9 +1,11 @@
+# syntax=docker/dockerfile:1
+
 # Stage 1: Build the React frontend
 FROM node:22-alpine AS frontend-builder
 
 WORKDIR /build/client
 COPY client/package*.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm npm install
 COPY client/ ./
 RUN npm run build
 
@@ -14,7 +16,7 @@ WORKDIR /app
 
 # Copy server code
 COPY server/package*.json ./
-RUN npm install --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm install --omit=dev
 COPY server/ ./
 
 # Copy built frontend into server/public

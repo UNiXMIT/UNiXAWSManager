@@ -41,7 +41,7 @@ updateContainer() {
 
 buildContainer() {
     printf "Building Container...\n\n"
-    sudo ${containerRuntime} build --tag ${containerRepo} -f $(dirname "$0")/Dockerfile
+    sudo DOCKER_BUILDKIT=1 ${containerRuntime} build --tag ${containerRepo} -f $(dirname "$0")/Dockerfile
 }
 
 startContainer() {

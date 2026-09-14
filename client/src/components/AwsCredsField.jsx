@@ -13,7 +13,7 @@ export default function AwsCredsField() {
   return (
     <div className="space-y-2">
       <div>
-        <label className="brutal-label">AWS Access Key ID</label>
+        <label className="brutal-label">AWS ACCESS KEY ID</label>
         <input
           type={show ? 'text' : 'password'}
           value={keyId}
@@ -25,7 +25,7 @@ export default function AwsCredsField() {
         />
       </div>
       <div>
-        <label className="brutal-label">AWS Secret Access Key</label>
+        <label className="brutal-label">AWS SECRET ACCESS KEY</label>
         <div className="flex flex-wrap gap-2">
           <input
             type={show ? 'text' : 'password'}

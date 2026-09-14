@@ -37,13 +37,17 @@ function SortIcon({ active, dir }) {
 }
 
 export default function AllInstancesTab({ notify }) {
-  const { region, setRegion } = useConfig();
+  const { region, setRegion, hasAwsCreds } = useConfig();
   const [instances, setInstances] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sortKey, setSortKey] = useState('launchTime');
   const [sortDir, setSortDir] = useState('desc');
 
   const load = async () => {
+    if (!hasAwsCreds) {
+      notify('No AWS credentials configured.', 'error');
+      return;
+    }
     setLoading(true);
     try {
       const data = await api.listInstances(undefined, region);

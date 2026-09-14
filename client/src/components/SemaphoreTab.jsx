@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import { useConfig } from '../context/ConfigContext';
-import SemTokenField from './SemTokenField';
 
 const REGIONS = [
   { label: 'EU', value: 1 },
@@ -228,9 +227,6 @@ export default function SemaphoreTab({ notify }) {
     <div className="space-y-5">
       {/* Toolbar */}
       <div className="brutal-panel">
-        <div className="mb-3 pb-3 border-b-2 border-edge">
-          <SemTokenField />
-        </div>
         <div className="flex flex-wrap gap-3 items-end">
         {projects.length > 1 && (
           <div>

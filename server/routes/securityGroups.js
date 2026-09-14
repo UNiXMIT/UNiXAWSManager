@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import {
-  EC2Client,
   DescribeSecurityGroupsCommand,
   CreateSecurityGroupCommand,
   DeleteSecurityGroupCommand,
@@ -8,12 +7,15 @@ import {
   RevokeSecurityGroupIngressCommand,
   ModifyInstanceAttributeCommand,
 } from '@aws-sdk/client-ec2';
+import { awsCredsMiddleware, makeEC2Client } from './awsClient.js';
 
 const router = Router();
 const DEFAULT_REGION = 'eu-west-2';
 const DEFAULT_VPC = 'vpc-6e7f1d06';
 
-const getClient = (region = DEFAULT_REGION) => new EC2Client({ region });
+router.use(awsCredsMiddleware);
+
+const getClient = (region = DEFAULT_REGION) => makeEC2Client(region);
 
 // POST /api/security-groups/attach — must be before /:id routes
 router.post('/attach', async (req, res) => {

@@ -25,7 +25,7 @@ function SortIcon({ active, dir }) {
 }
 
 export default function AmisTab({ notify }) {
-  const { region: activeRegion } = useConfig();
+  const { region: activeRegion, hasAwsCreds } = useConfig();
   const [region, setRegion] = useState(activeRegion);
   const [amis, setAmis] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,10 @@ export default function AmisTab({ notify }) {
   const [sortDir, setSortDir] = useState('desc');
 
   const load = async () => {
+    if (!hasAwsCreds) {
+      notify('No AWS credentials configured.', 'error');
+      return;
+    }
     setLoading(true);
     try {
       const data = await api.listAmis(region);

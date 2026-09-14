@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../api/client';
-import SemTokenField from './SemTokenField';
 
 // Strip ANSI color/format escape sequences so raw Ansible output renders cleanly
 function stripAnsi(str) {
@@ -349,9 +348,6 @@ export default function SemTasksTab({ notify }) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="brutal-panel">
-        <div className="mb-3 pb-3 border-b-2 border-edge">
-          <SemTokenField />
-        </div>
         <div className="flex flex-wrap items-center gap-3">
           {projects.length > 1 && (
             <select

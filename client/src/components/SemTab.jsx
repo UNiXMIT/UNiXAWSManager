@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api/client';
+import { useConfig } from '../context/ConfigContext';
 import ConfirmDialog from './ConfirmDialog';
 import StatCards from './StatCards';
 
@@ -12,6 +13,7 @@ const STATE_COLORS = {
 };
 
 export default function SemTab({ notify }) {
+  const { hasAwsCreds } = useConfig();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -19,6 +21,10 @@ export default function SemTab({ notify }) {
   const [confirmTerminateAll, setConfirmTerminateAll] = useState(false);
 
   const load = async () => {
+    if (!hasAwsCreds) {
+      notify('No AWS credentials configured.', 'error');
+      return;
+    }
     setLoading(true);
     try {
       const data = await api.listSem();

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, SEM_TOKEN_KEY } from '../api/client';
+import { api, SEM_TOKEN_KEY, AWS_ACCESS_KEY_ID_KEY, AWS_SECRET_ACCESS_KEY_KEY } from '../api/client';
 
 const FALLBACK = { defaultOwner: '', defaultRegion: 'all' };
 const OWNER_KEY = 'awsmanager.owner';
@@ -10,9 +10,13 @@ const ConfigContext = createContext({
   owner: '',
   region: 'all',
   semToken: '',
+  awsAccessKeyId: '',
+  awsSecretAccessKey: '',
+  hasAwsCreds: false,
   setOwner: () => {},
   setRegion: () => {},
   setSemToken: () => {},
+  setAwsCreds: () => {},
 });
 
 function readStored(key) {
@@ -41,6 +45,8 @@ function ConfigInner({ config, children }) {
     return readStored(REGION_KEY) || config.defaultRegion;
   });
   const [semToken, setSemTokenState] = useState(() => readStored(SEM_TOKEN_KEY) || '');
+  const [awsAccessKeyId, setAwsAccessKeyIdState] = useState(() => readStored(AWS_ACCESS_KEY_ID_KEY) || '');
+  const [awsSecretAccessKey, setAwsSecretAccessKeyState] = useState(() => readStored(AWS_SECRET_ACCESS_KEY_KEY) || '');
 
   const setOwner = (value) => {
     setOwnerState(value);
@@ -54,8 +60,21 @@ function ConfigInner({ config, children }) {
     setSemTokenState(value);
     writeStored(SEM_TOKEN_KEY, value);
   };
+  const setAwsCreds = ({ accessKeyId, secretAccessKey }) => {
+    setAwsAccessKeyIdState(accessKeyId);
+    setAwsSecretAccessKeyState(secretAccessKey);
+    writeStored(AWS_ACCESS_KEY_ID_KEY, accessKeyId);
+    writeStored(AWS_SECRET_ACCESS_KEY_KEY, secretAccessKey);
+  };
 
-  const value = { ...config, owner, region, semToken, setOwner, setRegion, setSemToken };
+  const hasAwsCreds = !!(awsAccessKeyId.trim() && awsSecretAccessKey.trim());
+
+  const value = {
+    ...config,
+    owner, region, semToken,
+    awsAccessKeyId, awsSecretAccessKey, hasAwsCreds,
+    setOwner, setRegion, setSemToken, setAwsCreds,
+  };
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
 }
 

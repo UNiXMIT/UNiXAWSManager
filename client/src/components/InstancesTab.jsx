@@ -14,7 +14,7 @@ const REGIONS = [
 ];
 
 export default function InstancesTab({ notify }) {
-  const { owner, setOwner, region, setRegion } = useConfig();
+  const { owner, setOwner, region, setRegion, hasAwsCreds } = useConfig();
   const [instances, setInstances] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,10 @@ export default function InstancesTab({ notify }) {
   const normalizedOwner = owner.trim();
 
   const load = async () => {
+    if (!hasAwsCreds) {
+      notify('No AWS credentials configured.', 'error');
+      return;
+    }
     if (!normalizedOwner) {
       setInstances([]);
       setSelected(null);

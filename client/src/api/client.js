@@ -1,13 +1,26 @@
 const BASE = '/api';
 
 export const SEM_TOKEN_KEY = 'awsmanager.semToken';
+export const AWS_ACCESS_KEY_ID_KEY = 'awsmanager.awsAccessKeyId';
+export const AWS_SECRET_ACCESS_KEY_KEY = 'awsmanager.awsSecretAccessKey';
 
-function readSemToken() {
+function readStored(key) {
   try {
-    return localStorage.getItem(SEM_TOKEN_KEY) || '';
+    return localStorage.getItem(key) || '';
   } catch {
     return '';
   }
+}
+
+function readSemToken() {
+  return readStored(SEM_TOKEN_KEY);
+}
+
+function readAwsCreds() {
+  return {
+    accessKeyId: readStored(AWS_ACCESS_KEY_ID_KEY),
+    secretAccessKey: readStored(AWS_SECRET_ACCESS_KEY_KEY),
+  };
 }
 
 async function request(method, path, body = null, params = null) {
@@ -22,6 +35,14 @@ async function request(method, path, body = null, params = null) {
   if (path.startsWith('/semaphore')) {
     const semToken = readSemToken();
     if (semToken) opts.headers['x-semaphore-token'] = semToken;
+  }
+  // Attach per-browser AWS credentials to endpoints backed by the AWS SDK.
+  if (path.startsWith('/instances') || path.startsWith('/security-groups')) {
+    const { accessKeyId, secretAccessKey } = readAwsCreds();
+    if (accessKeyId && secretAccessKey) {
+      opts.headers['x-aws-access-key-id'] = accessKeyId;
+      opts.headers['x-aws-secret-access-key'] = secretAccessKey;
+    }
   }
   if (body) {
     opts.headers['Content-Type'] = 'application/json';

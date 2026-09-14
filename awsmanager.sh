@@ -3,7 +3,6 @@
 containerName=awsmanager 
 containerRepo=mf/awsmanager 
 runOptions=(
--v /home/support/.aws:/root/.aws:ro,Z 
 -e SEMAPHORE_API_ENDPOINT=http://localhost:3000/api
 -p 8989:3001
 --restart always

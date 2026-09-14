@@ -6,6 +6,7 @@ import AmisTab from './components/AmisTab';
 import SemTab from './components/SemTab';
 import SemaphoreTab from './components/SemaphoreTab';
 import SemTasksTab from './components/SemTasksTab';
+import SettingsTab from './components/SettingsTab';
 import Toast from './components/Toast';
 import ThemeToggle from './components/ThemeToggle';
 
@@ -68,6 +69,15 @@ const TABS = [
         <rect x="3" y="4" width="18" height="7" />
         <rect x="3" y="13" width="18" height="7" />
         <path d="M7 7.5h.01M7 16.5h.01" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Settings',
+    icon: (
+      <svg {...iconProps}>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
     ),
   },
@@ -160,6 +170,7 @@ function Inner() {
           {activeTab === 3 && <AllInstancesTab notify={notify} />}
           {activeTab === 4 && <AmisTab notify={notify} />}
           {activeTab === 5 && <SemTab notify={notify} />}
+          {activeTab === 6 && <SettingsTab />}
         </main>
       </div>
 

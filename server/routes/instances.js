@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import {
-  EC2Client,
   DescribeInstancesCommand,
   DescribeInstanceAttributeCommand,
   StartInstancesCommand,
@@ -12,11 +11,14 @@ import {
   DescribeImagesCommand,
   DescribeRegionsCommand,
 } from '@aws-sdk/client-ec2';
+import { awsCredsMiddleware, makeEC2Client } from './awsClient.js';
 
 const router = Router();
 const DEFAULT_REGION = 'eu-west-2';
 
-const getClient = (region = DEFAULT_REGION) => new EC2Client({ region });
+router.use(awsCredsMiddleware);
+
+const getClient = (region = DEFAULT_REGION) => makeEC2Client(region);
 
 const getTagValue = (instance, key) => instance.Tags?.find(tag => tag.Key === key)?.Value || '';
 

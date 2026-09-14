@@ -17,7 +17,7 @@ export default function SemTokenField() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="SEMAPHORE API TOKEN"
-          className="brutal-input flex-1 min-w-0 sm:flex-none sm:w-52"
+          className="brutal-input flex-1 min-w-0 sm:flex-none sm:w-96"
           autoComplete="off"
           spellCheck={false}
         />

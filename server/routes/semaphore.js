@@ -15,7 +15,7 @@ function getConfig(tokenOverride) {
   const endpoint = process.env.SEMAPHORE_API_ENDPOINT;
   const token = tokenOverride || process.env.SEMAPHORE_API_TOKEN;
   if (!endpoint) throw new Error('SEMAPHORE_API_ENDPOINT is not configured');
-  if (!token) throw new Error('No Semaphore API token configured. Enter your API token in the Semaphore tab.');
+  if (!token) throw new Error('No Semaphore API token configured.');
   return { endpoint: endpoint.replace(/\/$/, ''), token };
 }
 

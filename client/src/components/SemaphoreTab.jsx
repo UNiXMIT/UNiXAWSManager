@@ -154,7 +154,10 @@ export default function SemaphoreTab({ notify }) {
 
   useEffect(() => {
     // Don't attempt to load anything until a token is configured.
-    if (!semToken) return;
+    if (!semToken) {
+      notifyRef.current('No Semaphore API token configured.', 'error');
+      return;
+    }
     const init = async () => {
       setLoadingViews(true);
       try {

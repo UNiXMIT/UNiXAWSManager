@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ConfigProvider } from './context/ConfigContext';
 import InstancesTab from './components/InstancesTab';
 import AllInstancesTab from './components/AllInstancesTab';
@@ -76,11 +76,14 @@ const TABS = [
 function Inner() {
   const [activeTab, setActiveTab] = useState(0);
   const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
 
-  const notify = (message, type = 'success') => {
+  // Stable identity so effects that depend on `notify` don't re-run every render.
+  const notify = useCallback((message, type = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  }, []);
 
   return (
     <div className="min-h-screen text-zinc-100 flex">

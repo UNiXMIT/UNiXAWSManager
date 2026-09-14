@@ -18,7 +18,7 @@ export default function SettingsTab() {
 
       <div className="brutal-panel space-y-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-white uppercase tracking-tight">AWS Credentials</h3>
+          <h3 className="text-sm font-bold text-white uppercase tracking-tight">AWS</h3>
           <span className={`brutal-badge border-black ${hasAwsCreds ? 'bg-green-400 text-black' : 'bg-red-400 text-black'}`}>
             {hasAwsCreds ? 'Set' : 'Not set'}
           </span>

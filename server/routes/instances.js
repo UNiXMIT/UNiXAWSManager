@@ -6,6 +6,7 @@ import {
   StopInstancesCommand,
   RebootInstancesCommand,
   CreateTagsCommand,
+  DeleteTagsCommand,
   ModifyInstanceAttributeCommand,
   TerminateInstancesCommand,
   DescribeImagesCommand,
@@ -348,6 +349,67 @@ router.post('/:id/reboot', async (req, res) => {
   const { region = DEFAULT_REGION } = req.body;
   try {
     await getClient(region).send(new RebootInstancesCommand({ InstanceIds: [req.params.id] }));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/instances/:id/tags?region=
+router.get('/:id/tags', async (req, res) => {
+  const { region = DEFAULT_REGION } = req.query;
+  try {
+    const [instance] = await getInstancesByIds(region, [req.params.id]);
+    if (!instance) return res.status(404).json({ error: `Instance ${req.params.id} not found.` });
+    const tags = (instance.Tags || [])
+      .map(t => ({ key: t.Key, value: t.Value }))
+      .sort((a, b) => a.key.localeCompare(b.key));
+    res.json(tags);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/instances/:id/tags — create or update tags
+// Body: { tags: [{ key, value }], region }
+router.post('/:id/tags', async (req, res) => {
+  const { tags, region = DEFAULT_REGION } = req.body;
+  if (!Array.isArray(tags) || tags.length === 0) {
+    return res.status(400).json({ error: 'At least one tag is required.' });
+  }
+  const cleaned = tags
+    .map(t => ({ Key: (t.key ?? '').trim(), Value: t.value ?? '' }))
+    .filter(t => t.Key);
+  if (!cleaned.length) return res.status(400).json({ error: 'Tag key is required.' });
+  if (cleaned.some(t => t.Key.toLowerCase().startsWith('aws:'))) {
+    return res.status(400).json({ error: 'Cannot modify reserved aws: tags.' });
+  }
+  try {
+    await getClient(region).send(
+      new CreateTagsCommand({ Resources: [req.params.id], Tags: cleaned })
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/instances/:id/tags — remove tags by key
+// Body: { keys: [...], region }
+router.delete('/:id/tags', async (req, res) => {
+  const { keys, region = DEFAULT_REGION } = req.body;
+  if (!Array.isArray(keys) || keys.length === 0) {
+    return res.status(400).json({ error: 'At least one tag key is required.' });
+  }
+  const cleaned = keys.map(k => (k ?? '').trim()).filter(Boolean);
+  if (!cleaned.length) return res.status(400).json({ error: 'Tag key is required.' });
+  if (cleaned.some(k => k.toLowerCase().startsWith('aws:'))) {
+    return res.status(400).json({ error: 'Cannot modify reserved aws: tags.' });
+  }
+  try {
+    await getClient(region).send(
+      new DeleteTagsCommand({ Resources: [req.params.id], Tags: cleaned.map(Key => ({ Key })) })
+    );
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

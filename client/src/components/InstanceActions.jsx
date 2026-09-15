@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
 import SecurityGroupPanel from './SecurityGroupPanel';
+import InstanceTags from './InstanceTags';
 
 function CopyButton({ value }) {
   const [copied, setCopied] = useState(false);
@@ -93,8 +94,6 @@ function ProtectionBadge({ on, label }) {
 
 export default function InstanceActions({ instance, region, notify, onDone, onClose, terminateScope = null }) {
   const [busy, setBusy] = useState('');
-  const [newName, setNewName] = useState(instance.name);
-  const [newOwner, setNewOwner] = useState(instance.owner);
   const [confirmTerminate, setConfirmTerminate] = useState(false);
   const [selectedSgId, setSelectedSgId] = useState('');
   const [protection, setProtection] = useState(null);
@@ -164,34 +163,6 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
           </div>
         </section>
 
-        {/* Rename */}
-        <section>
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Rename</h3>
-          <div className="flex gap-2">
-            <input
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              className="brutal-input flex-1 max-w-xs"
-            />
-            <ActionButton label="Rename" loading={busy === 'Rename'}
-              onClick={() => run('Rename', () => api.renameInstance(instance.instanceId, newName, region))} />
-          </div>
-        </section>
-
-        {/* Change Owner */}
-        <section>
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Change Owner</h3>
-          <div className="flex gap-2">
-            <input
-              value={newOwner}
-              onChange={e => setNewOwner(e.target.value)}
-              className="brutal-input flex-1 max-w-xs"
-            />
-            <ActionButton label="Change Owner" loading={busy === 'Change Owner'}
-              onClick={() => run('Change Owner', () => api.changeOwner(instance.instanceId, newOwner, region))} />
-          </div>
-        </section>
-
         {/* Protection */}
         <section>
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Stop / Terminate Protection</h3>
@@ -202,6 +173,9 @@ export default function InstanceActions({ instance, region, notify, onDone, onCl
               onClick={() => run('Disable Protection', () => api.setProtection(instance.instanceId, false, region))} />
           </div>
         </section>
+
+        {/* Tags */}
+        <InstanceTags instanceId={instance.instanceId} region={region} notify={notify} />
 
         {/* Security Groups */}
         <section>

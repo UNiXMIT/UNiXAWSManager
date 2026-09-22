@@ -52,14 +52,6 @@ You can access the AWSManager Web UI with:
 http://serverIP:8989
 ```
 
-## Customization 
-```
--v /home/support/.aws:/root/.aws:ro,Z
--e AWS_DEFAULT_REGION=eu-west-2
--e DEFAULT_REGION=eu-west-2
--e DEFAULT_OWNER=SUPPORT
-```
-
 ## Check AWSManager Logs
 ```
 podman logs awsmanager

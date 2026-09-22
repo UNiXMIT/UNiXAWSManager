@@ -84,60 +84,64 @@ export default function InstanceTags({ instanceId, region, notify }) {
           const dirty = (drafts[tag.key] ?? '') !== tag.value;
           const busy = busyKey === tag.key;
           return (
-            <div key={tag.key} className="flex items-center gap-2">
+            <div key={tag.key} className="flex flex-col sm:flex-row sm:items-center gap-2">
               <span
                 title={tag.key}
-                className="w-32 shrink-0 truncate font-mono text-xs font-bold text-zinc-300"
+                className="w-full sm:w-32 sm:shrink-0 truncate font-mono text-xs font-bold text-zinc-300"
               >
                 {tag.key}
               </span>
-              <input
-                value={drafts[tag.key] ?? ''}
-                onChange={e => setDrafts(d => ({ ...d, [tag.key]: e.target.value }))}
-                onKeyDown={e => e.key === 'Enter' && dirty && saveTag(tag.key)}
-                className="brutal-input flex-1 min-w-0 text-xs"
-              />
-              <button
-                onClick={() => saveTag(tag.key)}
-                disabled={busy || !dirty}
-                className="btn-info px-2 py-1 text-xs"
-              >
-                {busy ? '…' : 'Save'}
-              </button>
-              <button
-                onClick={() => removeTag(tag.key)}
-                disabled={busy}
-                title="Remove tag"
-                className="btn-danger px-2 py-1 text-xs"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2 w-full sm:flex-1 min-w-0">
+                <input
+                  value={drafts[tag.key] ?? ''}
+                  onChange={e => setDrafts(d => ({ ...d, [tag.key]: e.target.value }))}
+                  onKeyDown={e => e.key === 'Enter' && dirty && saveTag(tag.key)}
+                  className="brutal-input flex-1 min-w-0 text-xs"
+                />
+                <button
+                  onClick={() => saveTag(tag.key)}
+                  disabled={busy || !dirty}
+                  className="btn-info px-2 py-1 text-xs"
+                >
+                  {busy ? '…' : 'Save'}
+                </button>
+                <button
+                  onClick={() => removeTag(tag.key)}
+                  disabled={busy}
+                  title="Remove tag"
+                  className="btn-danger px-2 py-1 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
 
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-edge">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3 pt-3 border-t border-edge">
         <input
           value={newKey}
           onChange={e => setNewKey(e.target.value)}
           placeholder="Key"
-          className="brutal-input w-32 shrink-0 text-xs"
+          className="brutal-input w-full sm:w-32 sm:shrink-0 text-xs"
         />
-        <input
-          value={newValue}
-          onChange={e => setNewValue(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addTag()}
-          placeholder="Value"
-          className="brutal-input flex-1 min-w-0 text-xs"
-        />
-        <button
-          onClick={addTag}
-          disabled={adding || !newKey.trim()}
-          className="btn-success px-2 py-1 text-xs"
-        >
-          {adding ? '…' : 'Add'}
-        </button>
+        <div className="flex items-center gap-2 w-full sm:flex-1 min-w-0">
+          <input
+            value={newValue}
+            onChange={e => setNewValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTag()}
+            placeholder="Value"
+            className="brutal-input flex-1 min-w-0 text-xs"
+          />
+          <button
+            onClick={addTag}
+            disabled={adding || !newKey.trim()}
+            className="btn-success px-2 py-1 text-xs"
+          >
+            {adding ? '…' : 'Add'}
+          </button>
+        </div>
       </div>
     </section>
   );

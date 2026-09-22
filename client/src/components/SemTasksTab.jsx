@@ -7,6 +7,17 @@ function stripAnsi(str) {
   return (str || '').replace(/\x1b\[[\d;]*[a-zA-Z]/g, '');
 }
 
+// Format a duration in milliseconds to H:MM:SS (or MM:SS under an hour)
+function formatDuration(ms) {
+  if (ms == null || ms < 0) return '';
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
 // Format an ISO timestamp to [HH:MM:SS]
 function formatTime(timeStr) {
   if (!timeStr) return '';
@@ -55,6 +66,8 @@ function isActiveStatus(status) {
 function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
   const [output, setOutput]       = useState([]);
   const [taskStatus, setTaskStatus] = useState(task.status);
+  const [taskEnd, setTaskEnd]     = useState(task.end || null);
+  const [now, setNow]             = useState(Date.now());
   const [loading, setLoading]     = useState(true);
   const [following, setFollowing] = useState(false);
   const [isPinned, setIsPinned]   = useState(true);
@@ -75,6 +88,7 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
     const data = await api.semGetTask(projectId, task.id);
     if (!mountedRef.current) return null;
     setTaskStatus(data.status);
+    setTaskEnd(data.end || null);
     return data.status;
   }, [projectId, task.id]);
 
@@ -147,6 +161,14 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
     return () => el.removeEventListener('scroll', onScroll);
   }, [loading]); // re-attach once the container is rendered (loading → false)
 
+  // Tick a live clock every second while the task is still active so the
+  // footer duration counts up in real time.
+  useEffect(() => {
+    if (!isActiveStatus(taskStatus)) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [taskStatus]);
+
   // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -175,6 +197,10 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
   // Insert a blank line before each TASK/PLAY header (with or without a timestamp prefix)
   const outputText = rawText.replace(/([^\n])\n(\[\d{2}:\d{2}:\d{2}] )?(TASK |PLAY )/g, '$1\n\n$2$3');
   const templateName = task._templateName || task.message || task.name || task.template?.name || (task.template_id ? `Template #${task.template_id}` : 'Unknown Task');
+
+  const startMs = task.start ? new Date(task.start).getTime() : (task.created ? new Date(task.created).getTime() : null);
+  const endMs = isActiveStatus(taskStatus) ? now : (taskEnd ? new Date(taskEnd).getTime() : now);
+  const durationText = startMs != null ? formatDuration(endMs - startMs) : '';
 
   return createPortal(
     <div
@@ -231,8 +257,19 @@ function TaskOutputModal({ task, projectId, showTimestamps, onClose, notify }) {
 
         {/* Footer */}
         <div className="px-5 py-3 border-t-2 border-edge flex items-center justify-between flex-shrink-0 bg-surface">
-          <span className="text-xs text-zinc-500">
-            {task.created ? `Created: ${new Date(task.created).toLocaleString('en-GB')}` : ''}
+          <span className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+            {task.created && (
+              <span>
+                Created: {new Date(task.created).toLocaleString('en-GB')}
+                {task._startedBy && task._startedBy !== '—' && <span> by {task._startedBy}</span>}
+              </span>
+            )}
+            {durationText && (
+              <span>
+                Duration: <span className="font-mono text-zinc-400">{durationText}</span>
+                {isActiveStatus(taskStatus) && <span className="text-amber-400"> ●</span>}
+              </span>
+            )}
           </span>
           <div className="flex items-center gap-2">
             <button

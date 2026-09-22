@@ -4,8 +4,8 @@
 FROM node:22-alpine AS frontend-builder
 
 WORKDIR /build/client
-COPY client/package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm install
+COPY client/package.json ./
+RUN --mount=type=cache,target=/root/.npm npm install --registry=https://registry.npmjs.org/
 COPY client/ ./
 RUN npm run build
 
@@ -15,8 +15,8 @@ FROM node:22-alpine AS production
 WORKDIR /app
 
 # Copy server code
-COPY server/package*.json ./
-RUN --mount=type=cache,target=/root/.npm npm install --omit=dev
+COPY server/package.json ./
+RUN --mount=type=cache,target=/root/.npm npm install --omit=dev --registry=https://registry.npmjs.org/
 COPY server/ ./
 
 # Copy built frontend into server/public

@@ -6,6 +6,7 @@ import AmisTab from './components/AmisTab';
 import SemTab from './components/SemTab';
 import SemaphoreTab from './components/SemaphoreTab';
 import SemTasksTab from './components/SemTasksTab';
+import S3Tab from './components/S3Tab';
 import SettingsTab from './components/SettingsTab';
 import Toast from './components/Toast';
 import ThemeToggle from './components/ThemeToggle';
@@ -69,6 +70,16 @@ const TABS = [
         <rect x="3" y="4" width="18" height="7" />
         <rect x="3" y="13" width="18" height="7" />
         <path d="M7 7.5h.01M7 16.5h.01" />
+      </svg>
+    ),
+  },
+  {
+    label: 'S3',
+    icon: (
+      <svg {...iconProps}>
+        <ellipse cx="12" cy="6" rx="8" ry="3" />
+        <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
+        <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
       </svg>
     ),
   },
@@ -170,7 +181,8 @@ function Inner() {
           {activeTab === 3 && <AllInstancesTab notify={notify} />}
           {activeTab === 4 && <AmisTab notify={notify} />}
           {activeTab === 5 && <SemTab notify={notify} />}
-          {activeTab === 6 && <SettingsTab />}
+          {activeTab === 6 && <S3Tab notify={notify} />}
+          {activeTab === 7 && <SettingsTab />}
         </main>
       </div>
 

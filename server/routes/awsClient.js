@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { EC2Client } from '@aws-sdk/client-ec2';
+import { S3Client } from '@aws-sdk/client-s3';
 
 // Per-request AWS credentials, propagated across async/await via AsyncLocalStorage
 // so route handlers can keep calling getClient(region) unchanged.
@@ -21,4 +22,9 @@ export function awsCredsMiddleware(req, _res, next) {
 export function makeEC2Client(region) {
   const creds = store.getStore()?.creds;
   return new EC2Client(creds ? { region, credentials: creds } : { region });
+}
+
+export function makeS3Client(region) {
+  const creds = store.getStore()?.creds;
+  return new S3Client(creds ? { region, credentials: creds } : { region });
 }

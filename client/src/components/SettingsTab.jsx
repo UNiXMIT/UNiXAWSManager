@@ -1,11 +1,12 @@
 import { useConfig } from '../context/ConfigContext';
 import SemTokenField from './SemTokenField';
 import AwsCredsField from './AwsCredsField';
+import S3SettingsField from './S3SettingsField';
 
 // Central place to manage the credentials the app needs: the Semaphore API
 // token and the AWS access key / secret. Both are stored per-browser.
 export default function SettingsTab() {
-  const { semToken, hasAwsCreds } = useConfig();
+  const { semToken, hasAwsCreds, s3Bucket } = useConfig();
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -39,6 +40,19 @@ export default function SettingsTab() {
         <SemTokenField />
         <p className="text-xs text-zinc-500">
           Required for all Semaphore operations.
+        </p>
+      </div>
+
+      <div className="brutal-panel space-y-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-white uppercase tracking-tight">S3</h3>
+          <span className={`brutal-badge border-black ${s3Bucket ? 'bg-green-400 text-black' : 'bg-red-400 text-black'}`}>
+            {s3Bucket ? 'Set' : 'Not set'}
+          </span>
+        </div>
+        <S3SettingsField />
+        <p className="text-xs text-zinc-500">
+          Bucket browsed by the S3 tab, and how long generated presigned URLs stay valid.
         </p>
       </div>
     </div>

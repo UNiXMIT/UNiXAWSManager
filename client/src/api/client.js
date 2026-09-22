@@ -3,6 +3,9 @@ const BASE = '/api';
 export const SEM_TOKEN_KEY = 'awsmanager.semToken';
 export const AWS_ACCESS_KEY_ID_KEY = 'awsmanager.awsAccessKeyId';
 export const AWS_SECRET_ACCESS_KEY_KEY = 'awsmanager.awsSecretAccessKey';
+export const S3_BUCKET_KEY = 'awsmanager.s3Bucket';
+export const S3_REGION_KEY = 'awsmanager.s3Region';
+export const S3_EXPIRY_KEY = 'awsmanager.s3Expiry';
 
 function readStored(key) {
   try {
@@ -37,7 +40,7 @@ async function request(method, path, body = null, params = null) {
     if (semToken) opts.headers['x-semaphore-token'] = semToken;
   }
   // Attach per-browser AWS credentials to endpoints backed by the AWS SDK.
-  if (path.startsWith('/instances') || path.startsWith('/security-groups')) {
+  if (path.startsWith('/instances') || path.startsWith('/security-groups') || path.startsWith('/s3')) {
     const { accessKeyId, secretAccessKey } = readAwsCreds();
     if (accessKeyId && secretAccessKey) {
       opts.headers['x-aws-access-key-id'] = accessKeyId;
@@ -94,6 +97,13 @@ export const api = {
   semGetLastTasks: (projectId, limit) => request('GET', `/semaphore/projects/${projectId}/tasks/last`, null, { limit }),
   semGetTask: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}`),
   semGetTaskOutput: (projectId, taskId) => request('GET', `/semaphore/projects/${projectId}/tasks/${taskId}/output`),
+
+  // S3
+  s3ListObjects: (bucket, prefix, region, token) =>
+    request('GET', '/s3/objects', null, { bucket, prefix, region, token }),
+  s3CheckBucket: (bucket, region) => request('GET', '/s3/check', null, { bucket, region }),
+  s3Presign: (bucket, key, region, expiresIn) =>
+    request('POST', '/s3/presign', { bucket, key, region, expiresIn }),
 
   // Utils
   getMyIp: () => request('GET', '/myip'),

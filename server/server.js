@@ -6,6 +6,7 @@ import { existsSync } from 'fs';
 import instancesRouter from './routes/instances.js';
 import securityGroupsRouter from './routes/securityGroups.js';
 import semaphoreRouter from './routes/semaphore.js';
+import s3Router from './routes/s3.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,12 +27,16 @@ app.get('/api/config', (_req, res) => {
   res.json({
     defaultOwner: process.env.DEFAULT_OWNER || '',
     defaultRegion: process.env.DEFAULT_REGION || 'all',
+    defaultS3Bucket: process.env.S3_BUCKET || '',
+    defaultS3Region: process.env.S3_REGION || process.env.DEFAULT_REGION || 'eu-west-2',
+    defaultS3Expiry: Number(process.env.S3_PRESIGN_EXPIRY) || 3600,
   });
 });
 
 app.use('/api/instances', instancesRouter);
 app.use('/api/security-groups', securityGroupsRouter);
 app.use('/api/semaphore', semaphoreRouter);
+app.use('/api/s3', s3Router);
 
 app.get('/api/myip', async (_req, res) => {
   try {

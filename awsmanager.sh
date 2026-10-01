@@ -3,8 +3,9 @@
 containerName=awsmanager 
 containerRepo=mf/awsmanager 
 runOptions=(
--e SEMAPHORE_API_ENDPOINT=http://localhost:3000/api
+-e SEMAPHORE_API_ENDPOINT=http://semaphore:3000/api
 -p 8989:3001
+--network semaphore
 --restart always
 --health-cmd "wget -qO- http://localhost:3001/api/health || exit 1"
 --health-interval 30s

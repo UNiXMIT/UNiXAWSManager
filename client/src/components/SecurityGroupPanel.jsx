@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
+import CopyButton from './CopyButton';
 
-const DEFAULT_VPC = 'vpc-6e7f1d06';
-
-export default function SecurityGroupPanel({ instance, region, notify, selectedSgId, setSelectedSgId }) {
+export default function SecurityGroupPanel({ instance, region, notify, selectedSgId, setSelectedSgId, securityGroups, onGroupsChange }) {
   const [sgDetails, setSgDetails] = useState(null);
   const [loadingSg, setLoadingSg] = useState(false);
 
@@ -13,18 +12,15 @@ export default function SecurityGroupPanel({ instance, region, notify, selectedS
   const [addDesc, setAddDesc] = useState('');
   const [addingIp, setAddingIp] = useState(false);
 
-  // Create SG form
-  const [showCreate, setShowCreate] = useState(false);
-  const [createName, setCreateName] = useState('');
-  const [createDesc, setCreateDesc] = useState('');
-  const [createVpc, setCreateVpc] = useState(DEFAULT_VPC);
-
   // Attach SG form
   const [showAttach, setShowAttach] = useState(false);
   const [attachSgId, setAttachSgId] = useState('');
 
-  // Confirm delete SG
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDetach, setConfirmDetach] = useState(false);
+
+  const attachedIds = securityGroups.map(sg => sg.groupId);
+  const isAttached = attachedIds.includes(selectedSgId);
+  const isOnlyGroup = isAttached && attachedIds.length === 1;
 
   useEffect(() => {
     if (selectedSgId) {
@@ -82,43 +78,31 @@ export default function SecurityGroupPanel({ instance, region, notify, selectedS
     }
   };
 
-  const handleDeleteSg = async () => {
+  const handleDetachSg = async () => {
+    const remaining = attachedIds.filter(id => id !== selectedSgId);
     try {
-      await api.deleteSg(selectedSgId, region);
-      notify(`Deleted ${selectedSgId}`);
-      setSelectedSgId(instance.securityGroups.filter(sg => sg.groupId !== selectedSgId)[0]?.groupId || '');
-      setSgDetails(null);
+      await api.attachSgToInstance(instance.instanceId, remaining, region);
+      notify(`Detached ${selectedSgId} from ${instance.instanceId}`);
+      onGroupsChange(securityGroups.filter(sg => sg.groupId !== selectedSgId));
+      setSelectedSgId('');
     } catch (err) {
       notify(err.message, 'error');
     } finally {
-      setConfirmDelete(false);
-    }
-  };
-
-  const handleCreateSg = async () => {
-    if (!createName || !createDesc) return;
-    try {
-      const { groupId } = await api.createSg(createName, createDesc, createVpc, region);
-      notify(`Created ${groupId}`);
-      setCreateName('');
-      setCreateDesc('');
-      setShowCreate(false);
-      setSelectedSgId(groupId);
-    } catch (err) {
-      notify(err.message, 'error');
+      setConfirmDetach(false);
     }
   };
 
   const handleAttach = async () => {
     if (!attachSgId) return;
-    const existing = instance.securityGroups.map(sg => sg.groupId);
-    if (existing.includes(attachSgId)) {
+    if (attachedIds.includes(attachSgId)) {
       notify('That security group is already attached', 'error');
       return;
     }
     try {
-      await api.attachSgToInstance(instance.instanceId, [...existing, attachSgId], region);
+      await api.attachSgToInstance(instance.instanceId, [...attachedIds, attachSgId], region);
       notify(`Attached ${attachSgId} to ${instance.instanceId}`);
+      const groupName = await api.getSgDetails(attachSgId, region).then(d => d.groupName).catch(() => '');
+      onGroupsChange([...securityGroups, { groupId: attachSgId, groupName }]);
       setAttachSgId('');
       setShowAttach(false);
     } catch (err) {
@@ -137,14 +121,32 @@ export default function SecurityGroupPanel({ instance, region, notify, selectedS
             <div className="text-xs space-y-0.5">
               <span className="font-bold text-white">{sgDetails.groupName}</span>
               {sgDetails.description && <span className="text-zinc-400 ml-2">{sgDetails.description}</span>}
-              <div className="text-zinc-500 font-mono">VPC: {sgDetails.vpcId}</div>
+              <div className="group flex items-center gap-1.5 text-zinc-500 font-mono">
+                <span>SG: {sgDetails.groupId}</span>
+                <CopyButton value={sgDetails.groupId} title="Copy security group ID" />
+              </div>
+              <div className="group flex items-center gap-1.5 text-zinc-500 font-mono">
+                <span>VPC: {sgDetails.vpcId}</span>
+                <CopyButton value={sgDetails.vpcId} title="Copy VPC ID" />
+              </div>
             </div>
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="btn-danger px-2 py-1 text-xs flex-shrink-0"
-            >
-              Delete SG
-            </button>
+            {isAttached && (
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <button
+                  onClick={() => setConfirmDetach(true)}
+                  disabled={isOnlyGroup}
+                  title={isOnlyGroup
+                    ? 'An instance must keep at least one security group'
+                    : 'Remove this security group from the instance (the group itself is kept)'}
+                  className="btn-warn px-2 py-1 text-xs"
+                >
+                  Detach
+                </button>
+                {isOnlyGroup && (
+                  <span className="text-[10px] text-zinc-500 text-right">Only group attached</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Ingress Rules */}
@@ -234,7 +236,7 @@ export default function SecurityGroupPanel({ instance, region, notify, selectedS
           onClick={() => setShowAttach(v => !v)}
           className="text-xs font-bold uppercase text-accent hover:text-accent-hover transition-colors"
         >
-          {showAttach ? '▲ Hide' : '▼ Attach SG to this Instance'}
+          {showAttach ? '▲' : '▼'} Attach SG to this Instance
         </button>
         {showAttach && (
           <div className="mt-2 flex gap-2">
@@ -255,52 +257,12 @@ export default function SecurityGroupPanel({ instance, region, notify, selectedS
         )}
       </div>
 
-      {/* Create New SG */}
-      <div className="border-t-2 border-edge pt-3">
-        <button
-          onClick={() => setShowCreate(v => !v)}
-          className="text-xs font-bold uppercase text-accent hover:text-accent-hover transition-colors"
-        >
-          {showCreate ? '▲ Hide' : '▼ Create New Security Group'}
-        </button>
-        {showCreate && (
-          <div className="mt-2 space-y-2 max-w-sm">
-            <input
-              value={createName}
-              onChange={e => setCreateName(e.target.value)}
-              placeholder="Group name"
-              className="brutal-input w-full text-xs py-1.5"
-            />
-            <input
-              value={createDesc}
-              onChange={e => setCreateDesc(e.target.value)}
-              placeholder="Description"
-              className="brutal-input w-full text-xs py-1.5"
-            />
-            <input
-              value={createVpc}
-              onChange={e => setCreateVpc(e.target.value)}
-              placeholder="VPC ID"
-              className="brutal-input w-full text-xs font-mono py-1.5"
-            />
-            <button
-              onClick={handleCreateSg}
-              disabled={!createName || !createDesc}
-              className="btn-success px-3 py-1.5 text-xs"
-            >
-              Create Security Group
-            </button>
-          </div>
-        )}
-      </div>
-
-      {confirmDelete && (
+      {confirmDetach && (
         <ConfirmDialog
-          message={`Delete security group ${selectedSgId}? This cannot be undone.`}
-          confirmLabel="Delete"
-          danger
-          onConfirm={handleDeleteSg}
-          onCancel={() => setConfirmDelete(false)}
+          message={`Detach ${selectedSgId} from ${instance.instanceId}? The security group itself is not deleted, but its rules will no longer apply to this instance.`}
+          confirmLabel="Detach"
+          onConfirm={handleDetachSg}
+          onCancel={() => setConfirmDetach(false)}
         />
       )}
     </div>

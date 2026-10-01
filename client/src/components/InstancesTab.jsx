@@ -74,6 +74,11 @@ export default function InstancesTab({ notify }) {
     load();
   };
 
+  const handleSecurityGroupsChange = (instanceId, securityGroups) => {
+    setInstances(prev => prev.map(i => (i.instanceId === instanceId ? { ...i, securityGroups } : i)));
+    setSelected(prev => (prev?.instanceId === instanceId ? { ...prev, securityGroups } : prev));
+  };
+
   const running = instances.filter(i => i.state === 'running').length;
   const stopped = instances.filter(i => i.state === 'stopped').length;
   const stats = [
@@ -149,6 +154,7 @@ export default function InstancesTab({ notify }) {
                 notify={notify}
                 terminateScope={{ owner: selected.owner || normalizedOwner }}
                 onDone={handleDone}
+                onSecurityGroupsChange={handleSecurityGroupsChange}
                 onClose={() => setSelected(null)}
               />
             </div>

@@ -22,6 +22,9 @@ COPY server/ ./
 # Copy built frontend into server/public
 COPY --from=frontend-builder /build/client/dist ./public
 
+# Make everything readable at runtime
+RUN chmod -R a+rX /app
+
 EXPOSE 3001
 
 CMD ["node", "server.js"]

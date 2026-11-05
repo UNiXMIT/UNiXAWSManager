@@ -72,24 +72,93 @@ function CopyableIp({ ip }) {
   );
 }
 
-export default function InstanceTable({ instances, selected, onSelect }) {
+const COLUMNS = [
+  { key: 'name', label: 'Name' },
+  { key: 'instanceId', label: 'Instance ID' },
+  { key: 'state', label: 'State' },
+  { key: 'publicIp', label: 'Public IP' },
+  { key: 'privateIp', label: 'Private IP' },
+  { key: 'owner', label: 'Owner' },
+  { key: 'semStatus', label: 'SemStatus' },
+];
+
+function RowAction({ label, color, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      disabled={disabled}
+      className={`${color} px-2 py-0.5 text-[10px]`}
+    >
+      {label}
+    </button>
+  );
+}
+
+export default function InstanceTable({
+  instances,
+  selected,
+  onSelect,
+  sort,
+  onSort,
+  checkedIds,
+  onToggleChecked,
+  onToggleAll,
+  onAction,
+  busyIds,
+}) {
+  const allChecked = instances.length > 0 && instances.every(i => checkedIds.has(i.instanceId));
+  const someChecked = !allChecked && instances.some(i => checkedIds.has(i.instanceId));
+
   return (
     <div className="brutal-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-zinc-400 border-b-2 border-edge bg-surface uppercase text-xs tracking-wider">
-              <th className="px-4 py-3 font-bold">Name</th>
-              <th className="px-4 py-3 font-bold">Instance ID</th>
-              <th className="px-4 py-3 font-bold">State</th>
-              <th className="px-4 py-3 font-bold">Public IP</th>
-              <th className="px-4 py-3 font-bold">Private IP</th>
-              <th className="px-4 py-3 font-bold">Owner</th>
-              <th className="px-4 py-3 font-bold">SemStatus</th>
+              <th className="pl-4 pr-2 py-3 w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Select all visible instances"
+                  checked={allChecked}
+                  ref={el => { if (el) el.indeterminate = someChecked; }}
+                  onChange={() => onToggleAll(!allChecked)}
+                  className="accent-orange-500 w-4 h-4 cursor-pointer"
+                />
+              </th>
+              {COLUMNS.map(col => {
+                const active = sort.key === col.key;
+                return (
+                  <th
+                    key={col.key}
+                    aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    className="px-4 py-3 font-bold"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onSort(col.key)}
+                      className={`inline-flex items-center gap-1 uppercase tracking-wider font-bold hover:text-white ${active ? 'text-accent' : ''}`}
+                    >
+                      {col.label}
+                      <span className="text-[10px] w-3">{active ? (sort.dir === 'asc' ? '▲' : '▼') : ''}</span>
+                    </button>
+                  </th>
+                );
+              })}
+              <th className="px-4 py-3 font-bold">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {instances.map(inst => (
+            {instances.length === 0 && (
+              <tr>
+                <td colSpan={COLUMNS.length + 2} className="px-4 py-8 text-center text-zinc-500 font-medium">
+                  No instances match the current filter
+                </td>
+              </tr>
+            )}
+            {instances.map(inst => {
+              const busy = busyIds.has(inst.instanceId);
+              return (
               <tr
                 key={inst.instanceId}
                 onClick={() => onSelect(inst.instanceId === selected?.instanceId ? null : inst)}
@@ -99,6 +168,15 @@ export default function InstanceTable({ instances, selected, onSelect }) {
                     : 'hover:bg-surface'
                 }`}
               >
+                <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${inst.name || inst.instanceId}`}
+                    checked={checkedIds.has(inst.instanceId)}
+                    onChange={() => onToggleChecked(inst.instanceId)}
+                    className="accent-orange-500 w-4 h-4 cursor-pointer"
+                  />
+                </td>
                 <td className="px-4 py-3 font-bold text-white">{inst.name || '—'}</td>
                 <td className="px-4 py-3 font-mono text-zinc-300 text-xs">{inst.instanceId}</td>
                 <td className="px-4 py-3">
@@ -111,8 +189,16 @@ export default function InstanceTable({ instances, selected, onSelect }) {
                 <td className="px-4 py-3 text-xs"><CopyableIp ip={inst.privateIp} /></td>
                 <td className="px-4 py-3 text-zinc-300">{inst.owner || '—'}</td>
                 <td className="px-4 py-3 text-zinc-300">{inst.semStatus || '—'}</td>
+                <td className="px-4 py-3">
+                  <span className="flex gap-1.5">
+                    <RowAction label="Start" color="btn-success" disabled={busy || inst.state !== 'stopped'} onClick={() => onAction(inst, 'start')} />
+                    <RowAction label="Stop" color="btn-warn" disabled={busy || inst.state !== 'running'} onClick={() => onAction(inst, 'stop')} />
+                    <RowAction label="Reboot" color="btn-warn" disabled={busy || inst.state !== 'running'} onClick={() => onAction(inst, 'reboot')} />
+                  </span>
+                </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

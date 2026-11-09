@@ -21,7 +21,7 @@ const ACTIONS = {
 };
 
 const REFRESH_KEY = 'awsmanager.instancesRefreshSec';
-const DEFAULT_REFRESH_SEC = 30;
+const DEFAULT_REFRESH_SEC = 0;
 const REFRESH_OPTIONS = [0, 10, 15, 30, 60, 120, 300];
 
 function readRefreshSec() {

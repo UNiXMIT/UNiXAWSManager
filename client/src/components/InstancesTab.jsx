@@ -259,42 +259,35 @@ export default function InstancesTab({ notify }) {
 
   return (
     <div className="space-y-4">
-      {/* Filter bar — extra bottom padding (md+) leaves room for the absolute caption */}
-      <div className="brutal-panel flex flex-wrap gap-3 items-end md:pb-8">
-        <div className="relative">
+      {/* 2-col grid on small screens, single wrapping row from md up; items-start keeps labels aligned */}
+      <div className="brutal-panel grid grid-cols-2 gap-x-3 gap-y-4 md:flex md:flex-wrap md:items-start">
+        <div className="min-w-0">
           <label className="brutal-label">Owner</label>
           <input
             value={owner}
             onChange={e => setOwner(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && load()}
             placeholder="BWAYNE"
-            className="brutal-input w-36"
+            className="brutal-input w-full md:w-36"
           />
-          <p className="static md:absolute left-0 md:top-full mt-1 text-xs text-zinc-500">(case sensitive)</p>
+          <p className="mt-1 text-xs text-zinc-500">(case sensitive)</p>
         </div>
-        <div>
+        <div className="min-w-0">
           <label className="brutal-label">Region</label>
           <select
             value={region}
             onChange={e => { setRegion(e.target.value); setInstances([]); setSelected(null); setCheckedIds(new Set()); }}
-            className="brutal-input"
+            className="brutal-input w-full md:w-auto"
           >
             {REGIONS.map(r => <option key={r} value={r}>{r === 'all' ? 'All Regions' : r}</option>)}
           </select>
         </div>
-        <button
-          onClick={() => load()}
-          disabled={loading || !normalizedOwner}
-          className="btn-accent"
-        >
-          {loading ? 'Loading…' : 'Load Instances'}
-        </button>
-        <div>
+        <div className="min-w-0">
           <label className="brutal-label">Auto Reload</label>
           <select
             value={refreshSec}
             onChange={e => handleRefreshChange(e.target.value)}
-            className="brutal-input"
+            className="brutal-input w-full md:w-auto"
           >
             {REFRESH_OPTIONS.map(s => (
               <option key={s} value={s}>
@@ -303,13 +296,26 @@ export default function InstancesTab({ notify }) {
             ))}
           </select>
         </div>
-        {instances.length > 0 && region !== 'all' && (
+        <div className="min-w-0">
+          <span className="brutal-label invisible" aria-hidden="true">&nbsp;</span>
           <button
-            onClick={() => setConfirmTermAll(true)}
-            className="btn-danger ml-auto"
+            onClick={() => load()}
+            disabled={loading || !normalizedOwner}
+            className="btn-accent w-full md:w-auto"
           >
-            ⚠ Terminate All ({normalizedOwner})
+            {loading ? 'Loading…' : 'Load Instances'}
           </button>
+        </div>
+        {instances.length > 0 && region !== 'all' && (
+          <div className="col-span-2 min-w-0 md:col-span-1 md:ml-auto">
+            <span className="brutal-label invisible hidden md:block" aria-hidden="true">&nbsp;</span>
+            <button
+              onClick={() => setConfirmTermAll(true)}
+              className="btn-danger w-full md:w-auto"
+            >
+              ⚠ Terminate All ({normalizedOwner})
+            </button>
+          </div>
         )}
       </div>
 
